@@ -17,15 +17,20 @@ import com.example.kaido.noteapp.R;
 import com.example.kaido.noteapp.adapter.NoteAdapter;
 import com.example.kaido.noteapp.database.NoteDB;
 import com.example.kaido.noteapp.entities.Note;
+import com.example.kaido.noteapp.listeners.NoteListener;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements NoteListener {
     public static final int REQUEST_CODE_ADD_NOTE = 1;
+    public static final int REQUEST_CODE_GET_NOTES = 2;
+    public static final int REQUEST_CODE_UPDATE_NOTE = 3;
     private RecyclerView recyclerView;
     private NoteAdapter noteAdapter;
     private List<Note> noteList;
+
+    private int noteSelectedPosition = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,15 +48,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         recyclerView = findViewById(R.id.recyclerViewNotes);
-        recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL));
+        recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
         noteList = new ArrayList<>();
-        noteAdapter = new NoteAdapter(noteList);
+        noteAdapter = new NoteAdapter(noteList, this);
         recyclerView.setAdapter(noteAdapter);
 
-        getNotes();
+        getNotes(REQUEST_CODE_GET_NOTES);
     }
 
-    private void getNotes() {
+    private void getNotes(final int requsetCode) {
         @SuppressLint("StaticFieldLeak")
         class GetNotesTask extends AsyncTask<Void, Void, List<Note>> {
 
@@ -63,14 +68,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             protected void onPostExecute(List<Note> notes) {
                 super.onPostExecute(notes);
-                if(noteList.size() == 0) {
+                if (requsetCode == REQUEST_CODE_GET_NOTES) {
                     noteList.addAll(notes);
                     noteAdapter.notifyDataSetChanged();
-                } else {
-                    noteList.add(0,notes.get(0));
+                } else if (requsetCode == REQUEST_CODE_ADD_NOTE) {
+                    noteList.add(0, notes.get(0));
                     noteAdapter.notifyItemInserted(0);
+                    recyclerView.smoothScrollToPosition(0);
+                } else if (requsetCode == REQUEST_CODE_UPDATE_NOTE) {
+                    noteList.remove(noteSelectedPosition);
+                    noteList.add(noteSelectedPosition, notes.get(noteSelectedPosition));
+                    noteAdapter.notifyItemChanged(noteSelectedPosition);
                 }
-                recyclerView.scrollToPosition(0);
             }
         }
         new GetNotesTask().execute();
@@ -79,8 +88,21 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == REQUEST_CODE_ADD_NOTE && resultCode == RESULT_OK) {
-            getNotes();
+        if (requestCode == REQUEST_CODE_ADD_NOTE && resultCode == RESULT_OK) {
+            getNotes(REQUEST_CODE_ADD_NOTE);
+        } else if (requestCode == REQUEST_CODE_UPDATE_NOTE && resultCode == RESULT_OK) {
+            if (data != null) {
+                getNotes(REQUEST_CODE_UPDATE_NOTE);
+            }
         }
+    }
+
+    @Override
+    public void onClickedNote(Note note, int positon) {
+        noteSelectedPosition = positon;
+        Intent intent = new Intent(getApplicationContext(), CreateNoteActivity.class);
+        intent.putExtra("isViewOrUpdateNote", true);
+        intent.putExtra("note", note);
+        startActivityForResult(intent, REQUEST_CODE_UPDATE_NOTE);
     }
 }

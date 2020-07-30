@@ -59,6 +59,8 @@ public class CreateNoteActivity extends AppCompatActivity {
 
     private AlertDialog alertDialog;
 
+    private Note selectedNote;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,8 +96,31 @@ public class CreateNoteActivity extends AppCompatActivity {
         });
         selectedColor = "#333333";
         selectedImagePath = "";
+
+        if(getIntent().getBooleanExtra("isViewOrUpdateNote", false)) {
+            selectedNote = (Note) getIntent().getSerializableExtra("note");
+            setViewOrUpdateNote();
+        }
+
         initMiscellaneous();
         setSubtitleIndicator();
+    }
+
+    private void setViewOrUpdateNote() {
+        inputNoteTitle.setText(selectedNote.getTitle());
+        inputNoteSubtitle.setText(selectedNote.getSubtitle());
+        txtDateTime.setText(selectedNote.getDateTime());
+        inputNoteContent.setText(selectedNote.getNoteContent());
+        if(selectedNote.getImagePath() != null && !selectedNote.getImagePath().trim().isEmpty()) {
+            imgNote.setImageBitmap(BitmapFactory.decodeFile(selectedNote.getImagePath()));
+            imgNote.setVisibility(View.VISIBLE);
+            selectedImagePath = selectedNote.getImagePath();
+        }
+
+        if(selectedNote.getUrl() != null && !selectedNote.getUrl().trim().isEmpty()) {
+            txtLinkURL.setText(selectedNote.getUrl());
+            txtLinkURL.setVisibility(View.VISIBLE);
+        }
     }
 
 
@@ -116,6 +141,10 @@ public class CreateNoteActivity extends AppCompatActivity {
         note.setImagePath(selectedImagePath);
         if(layoutLinkURL.getVisibility() == View.VISIBLE) {
             note.setUrl(txtLinkURL.getText().toString());
+        }
+
+        if(selectedNote != null) {
+            note.setId(selectedNote.getId());
         }
 
         @SuppressLint("StaticFieldLeak")
@@ -221,6 +250,23 @@ public class CreateNoteActivity extends AppCompatActivity {
                 setSubtitleIndicator();
             }
         });
+
+        if(selectedNote != null && selectedNote.getColor() != null && !selectedNote.getColor().trim().isEmpty()) {
+            switch (selectedNote.getColor()) {
+                case "#F4BF51":
+                    layoutMiscellaneous.findViewById(R.id.imgColor2).performClick();
+                    break;
+                case "#DF3C37" :
+                    layoutMiscellaneous.findViewById(R.id.imgColor3).performClick();
+                    break;
+                case "#2437B8" :
+                    layoutMiscellaneous.findViewById(R.id.imgColor4).performClick();
+                    break;
+                case "#000000" :
+                    layoutMiscellaneous.findViewById(R.id.imgColor5).performClick();
+                    break;
+            }
+        }
 
         layoutMiscellaneous.findViewById(R.id.layoutAddImage).setOnClickListener(new View.OnClickListener() {
             @Override
