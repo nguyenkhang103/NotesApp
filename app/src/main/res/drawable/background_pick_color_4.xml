@@ -3,7 +3,7 @@
     <item>
         <shape android:shape="oval">
             <stroke android:width="2dp"
-                android:color="@color/colorDefaultNote">
+                android:color="@color/colorNote4">
             </stroke>
         </shape>
     </item>
@@ -25,7 +25,7 @@
         android:right="@dimen/_6sdp"
         android:bottom="@dimen/_6sdp">
         <shape android:shape="oval">
-            <solid android:color="@color/colorDefaultNote">
+            <solid android:color="@color/colorNote4">
             </solid>
         </shape>
     </item>
