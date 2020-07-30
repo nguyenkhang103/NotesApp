@@ -50,7 +50,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
 
     public static class NoteHolder extends RecyclerView.ViewHolder{
 
-        TextView txtNoteTitle, txtNoteSubTitle, txtDateTime;
+        TextView txtNoteTitle, txtNoteSubTitle, txtDateTime, txtLinkURL;
         LinearLayout layoutNote;
         RoundedImageView imageNote;
 
@@ -61,10 +61,11 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
             txtDateTime = itemView.findViewById(R.id.textDateTime);
             layoutNote = itemView.findViewById(R.id.layout_item_note);
             imageNote = itemView.findViewById(R.id.imageImageNote);
+            txtLinkURL = itemView.findViewById(R.id.textLinkURL);
         }
         public void setNote(Note note) {
             txtNoteTitle.setText(note.getTitle());
-            if(note.getSubtitle().toString().trim().isEmpty()) {
+            if(note.getSubtitle().trim().isEmpty()) {
                 txtNoteSubTitle.setVisibility(View.GONE);
             } else {
                 txtNoteSubTitle.setText(note.getSubtitle());
@@ -83,6 +84,12 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
                 imageNote.setVisibility(View.VISIBLE);
             } else {
                 imageNote.setVisibility(View.GONE);
+            }
+
+            if(note.getUrl() == null || note.getUrl().trim().isEmpty()) {
+                txtLinkURL.setVisibility(View.GONE);
+            } else {
+                txtLinkURL.setText(note.getUrl());
             }
         }
     }

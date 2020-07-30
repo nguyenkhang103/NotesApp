@@ -2,6 +2,7 @@ package com.example.kaido.noteapp.activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -14,12 +15,18 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
+import android.util.Patterns;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -36,16 +43,21 @@ import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 public class CreateNoteActivity extends AppCompatActivity {
     private EditText inputNoteTitle, inputNoteSubtitle, inputNoteContent;
-    private TextView txtDateTime;
+    private TextView txtDateTime, txtLinkURL;
     private ImageView imgDone, imgNote;
     private String selectedColor, selectedImagePath;
     private View viewSubtitleIndicator;
 
+    private LinearLayout layoutLinkURL;
+
     private static final int REQUEST_CODE_STORAGE_PERMISSION = 1;
     private static final int REQUEST_CODE_SELECT_IMAGE = 2;
+
+    private AlertDialog alertDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +79,8 @@ public class CreateNoteActivity extends AppCompatActivity {
         imgDone = findViewById(R.id.imageDone);
         imgNote = findViewById(R.id.imageNote);
         viewSubtitleIndicator = findViewById(R.id.viewSubTitleIndicator);
+        layoutLinkURL = findViewById(R.id.layoutLinkURL);
+        txtLinkURL = findViewById(R.id.textLinkURL);
 
         txtDateTime.setText(
                 new SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm a", Locale.getDefault()).format(new Date())
@@ -100,6 +114,9 @@ public class CreateNoteActivity extends AppCompatActivity {
         note.setDateTime(txtDateTime.getText().toString());
         note.setColor(selectedColor);
         note.setImagePath(selectedImagePath);
+        if(layoutLinkURL.getVisibility() == View.VISIBLE) {
+            note.setUrl(txtLinkURL.getText().toString());
+        }
 
         @SuppressLint("StaticFieldLeak")
         class SaveNoteTask extends AsyncTask<Void, Void, Void> {
@@ -220,6 +237,13 @@ public class CreateNoteActivity extends AppCompatActivity {
                 }
             }
         });
+        layoutMiscellaneous.findViewById(R.id.layoutAddURL).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                showAddURLDialog();
+            }
+        });
     }
 
     private void setSubtitleIndicator() {
@@ -249,19 +273,19 @@ public class CreateNoteActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode== REQUEST_CODE_SELECT_IMAGE && resultCode == RESULT_OK) {
+        if (requestCode == REQUEST_CODE_SELECT_IMAGE && resultCode == RESULT_OK) {
             Uri selectedImage = data.getData();
-            if(selectedImage != null) {
+            if (selectedImage != null) {
                 try {
 
                     InputStream inputStream = getContentResolver().openInputStream(selectedImage);
                     Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
                     imgNote.setImageBitmap(bitmap);
-                   imgNote.setVisibility(View.VISIBLE);
-                   selectedImagePath = getImagePath(selectedImage);
+                    imgNote.setVisibility(View.VISIBLE);
+                    selectedImagePath = getImagePath(selectedImage);
 
                 } catch (Exception ex) {
-                    Toast.makeText(this, ex.getMessage(),Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
         }
@@ -279,5 +303,42 @@ public class CreateNoteActivity extends AppCompatActivity {
             cursor.close();
         }
         return imagePath;
+    }
+
+    private void showAddURLDialog() {
+        if (alertDialog == null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(CreateNoteActivity.this);
+            View view = LayoutInflater.from(this).inflate(R.layout.layout_add_url, (ViewGroup) findViewById(R.id.layoutAddURLDialog));
+            builder.setView(view);
+
+            alertDialog = builder.create();
+            if(alertDialog.getWindow() != null) {
+                alertDialog.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+            }
+            final EditText inputURL = view.findViewById(R.id.inputLinkURL);
+            inputURL.requestFocus();
+            view.findViewById(R.id.textAddURL).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(inputURL.getText().toString().trim().isEmpty()) {
+                        Toast.makeText(CreateNoteActivity.this, "Enter URL", Toast.LENGTH_SHORT).show();
+                    } else if (!Patterns.WEB_URL.matcher(inputURL.getText().toString().trim()).matches()) {
+                        Toast.makeText(CreateNoteActivity.this, "URL Not Available", Toast.LENGTH_SHORT).show();
+                    } else {
+                        txtLinkURL.setText(inputURL.getText().toString());
+                        layoutLinkURL.setVisibility(View.VISIBLE);
+                        alertDialog.dismiss();
+                    }
+                }
+            });
+
+            view.findViewById(R.id.textCancel).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    alertDialog.dismiss();
+                }
+            });
+        }
+        alertDialog.show();
     }
 }
