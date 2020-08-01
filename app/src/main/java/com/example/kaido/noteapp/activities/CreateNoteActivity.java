@@ -101,7 +101,23 @@ public class CreateNoteActivity extends AppCompatActivity {
             selectedNote = (Note) getIntent().getSerializableExtra("note");
             setViewOrUpdateNote();
         }
+        findViewById(R.id.imageDeleteImage).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                imgNote.setImageBitmap(null);
+                imgNote.setVisibility(View.GONE);
+                findViewById(R.id.imageDeleteImage).setVisibility(View.GONE);
+                selectedImagePath="";
+            }
+        });
 
+        findViewById(R.id.imageDeleteLinkWeb).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                txtLinkURL.setText(null);
+                layoutLinkURL.setVisibility(View.GONE);
+            }
+        });
         initMiscellaneous();
         setSubtitleIndicator();
     }
@@ -114,12 +130,14 @@ public class CreateNoteActivity extends AppCompatActivity {
         if(selectedNote.getImagePath() != null && !selectedNote.getImagePath().trim().isEmpty()) {
             imgNote.setImageBitmap(BitmapFactory.decodeFile(selectedNote.getImagePath()));
             imgNote.setVisibility(View.VISIBLE);
+            findViewById(R.id.imageDeleteImage).setVisibility(View.VISIBLE);
             selectedImagePath = selectedNote.getImagePath();
         }
 
         if(selectedNote.getUrl() != null && !selectedNote.getUrl().trim().isEmpty()) {
             txtLinkURL.setText(selectedNote.getUrl());
-            txtLinkURL.setVisibility(View.VISIBLE);
+            layoutLinkURL.setVisibility(View.VISIBLE);
+            findViewById(R.id.imageDeleteLinkWeb).setVisibility(View.VISIBLE);
         }
     }
 
@@ -323,12 +341,12 @@ public class CreateNoteActivity extends AppCompatActivity {
             Uri selectedImage = data.getData();
             if (selectedImage != null) {
                 try {
-
                     InputStream inputStream = getContentResolver().openInputStream(selectedImage);
                     Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
                     imgNote.setImageBitmap(bitmap);
                     imgNote.setVisibility(View.VISIBLE);
                     selectedImagePath = getImagePath(selectedImage);
+                    findViewById(R.id.imageDeleteImage).setVisibility(View.VISIBLE);
 
                 } catch (Exception ex) {
                     Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();
