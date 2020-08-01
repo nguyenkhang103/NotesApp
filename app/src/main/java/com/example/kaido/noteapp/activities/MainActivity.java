@@ -53,10 +53,10 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
         noteAdapter = new NoteAdapter(noteList, this);
         recyclerView.setAdapter(noteAdapter);
 
-        getNotes(REQUEST_CODE_GET_NOTES);
+        getNotes(REQUEST_CODE_GET_NOTES, false);
     }
 
-    private void getNotes(final int requsetCode) {
+    private void getNotes(final int requsetCode, final boolean isNoteDeleted) {
         @SuppressLint("StaticFieldLeak")
         class GetNotesTask extends AsyncTask<Void, Void, List<Note>> {
 
@@ -77,8 +77,12 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
                     recyclerView.smoothScrollToPosition(0);
                 } else if (requsetCode == REQUEST_CODE_UPDATE_NOTE) {
                     noteList.remove(noteSelectedPosition);
-                    noteList.add(noteSelectedPosition, notes.get(noteSelectedPosition));
-                    noteAdapter.notifyItemChanged(noteSelectedPosition);
+                    if(isNoteDeleted) {
+                        noteAdapter.notifyItemRemoved(noteSelectedPosition);
+                    } else {
+                        noteList.add(noteSelectedPosition, notes.get(noteSelectedPosition));
+                        noteAdapter.notifyItemChanged(noteSelectedPosition);
+                    }
                 }
             }
         }
@@ -89,10 +93,10 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_ADD_NOTE && resultCode == RESULT_OK) {
-            getNotes(REQUEST_CODE_ADD_NOTE);
+            getNotes(REQUEST_CODE_ADD_NOTE, false);
         } else if (requestCode == REQUEST_CODE_UPDATE_NOTE && resultCode == RESULT_OK) {
             if (data != null) {
-                getNotes(REQUEST_CODE_UPDATE_NOTE);
+                getNotes(REQUEST_CODE_UPDATE_NOTE, data.getBooleanExtra("isNoteDeleted", false));
             }
         }
     }

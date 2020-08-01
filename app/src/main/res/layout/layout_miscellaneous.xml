@@ -177,7 +177,8 @@
         android:layout_height="@dimen/_35sdp"
         android:layout_margin="@dimen/_10sdp"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        tools:ignore="UseCompoundDrawables">
 
         <ImageView
             android:layout_width="@dimen/_24sdp"
@@ -195,6 +196,35 @@
             android:text="@string/add_link_url"
             android:textColor="@color/colorWhite"
             android:textSize="@dimen/_13sdp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/_35sdp"
+        android:layout_margin="@dimen/_10sdp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:id="@+id/layoutDeleteNote"
+        android:visibility="gone"
+        tools:ignore="UseCompoundDrawables">
+
+        <ImageView
+            android:layout_width="@dimen/_24sdp"
+            android:layout_height="@dimen/_24sdp"
+            android:src="@drawable/ic_delete"
+            android:tint="@color/colorDelete"
+            android:contentDescription="@string/app_name"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/delete_note"
+            android:textColor="@color/colorDelete"
+            android:fontFamily="@font/ubuntu_medium"
+            android:textSize="@dimen/_13sdp"
+            android:layout_marginStart="@dimen/_12sdp"
+            android:includeFontPadding="false"/>
 
     </LinearLayout>
 
