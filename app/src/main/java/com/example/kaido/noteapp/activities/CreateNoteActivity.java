@@ -119,6 +119,22 @@ public class CreateNoteActivity extends AppCompatActivity {
                 layoutLinkURL.setVisibility(View.GONE);
             }
         });
+
+        if (getIntent().getBooleanExtra("isQuickActionNote", false)) {
+            String type = getIntent().getStringExtra("quickActionType");
+            if (type != null) {
+                if (type.equals("images")) {
+                    selectedImagePath  = getIntent().getStringExtra("imagePath");
+                    imgNote.setImageBitmap(BitmapFactory.decodeFile(selectedImagePath));
+                    imgNote.setVisibility(View.VISIBLE);
+                    findViewById(R.id.imageDeleteImage).setVisibility(View.VISIBLE);
+                } else if (type.equals("web_link")) {
+                    txtLinkURL.setText(getIntent().getStringExtra("url"));
+                    layoutLinkURL.setVisibility(View.VISIBLE);
+                    findViewById(R.id.imageDeleteLinkWeb).setVisibility(View.VISIBLE);
+                }
+            }
+        }
         initMiscellaneous();
         setSubtitleIndicator();
     }
@@ -405,6 +421,7 @@ public class CreateNoteActivity extends AppCompatActivity {
                     } else {
                         txtLinkURL.setText(inputURL.getText().toString());
                         layoutLinkURL.setVisibility(View.VISIBLE);
+                        findViewById(R.id.imageDeleteLinkWeb).setVisibility(View.VISIBLE);
                         alertDialog.dismiss();
                     }
                 }

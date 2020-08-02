@@ -103,7 +103,7 @@
             android:src="@drawable/ic_web"
             android:tint="@color/colorIcons"
             android:layout_marginStart="@dimen/_15sdp"
-            android:id="@+id/imageWebLink"/>
+            android:id="@+id/imageWebLinkNote"/>
     </LinearLayout>
 
     <ImageView
