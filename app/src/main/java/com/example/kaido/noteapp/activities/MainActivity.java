@@ -9,8 +9,11 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 
 import com.example.kaido.noteapp.R;
@@ -54,6 +57,26 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
         recyclerView.setAdapter(noteAdapter);
 
         getNotes(REQUEST_CODE_GET_NOTES, false);
+
+        EditText inputSearchNote = findViewById(R.id.editTextSearch);
+        inputSearchNote.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                noteAdapter.timerCancel();
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (noteList.size() != 0) {
+                    noteAdapter.searchNote(editable.toString());
+                }
+            }
+        });
     }
 
     private void getNotes(final int requsetCode, final boolean isNoteDeleted) {

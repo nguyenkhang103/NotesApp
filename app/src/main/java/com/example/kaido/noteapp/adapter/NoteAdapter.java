@@ -3,6 +3,8 @@ package com.example.kaido.noteapp.adapter;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,15 +19,21 @@ import com.example.kaido.noteapp.entities.Note;
 import com.example.kaido.noteapp.listeners.NoteListener;
 import com.makeramen.roundedimageview.RoundedImageView;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
     private List<Note> notes;
     private NoteListener noteListener;
+    private List<Note> noteSource;
+    private Timer timer;
 
     public NoteAdapter(List<Note> notes, NoteListener noteListener) {
         this.notes = notes;
         this.noteListener = noteListener;
+        this.noteSource = notes;
     }
 
     @NonNull
@@ -57,7 +65,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
         return position;
     }
 
-    public static class NoteHolder extends RecyclerView.ViewHolder{
+    public static class NoteHolder extends RecyclerView.ViewHolder {
 
         TextView txtNoteTitle, txtNoteSubTitle, txtDateTime, txtLinkURL;
         LinearLayout layoutNote;
@@ -72,9 +80,10 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
             imageNote = itemView.findViewById(R.id.imageImageNote);
             txtLinkURL = itemView.findViewById(R.id.textLinkURL);
         }
+
         public void setNote(Note note) {
             txtNoteTitle.setText(note.getTitle());
-            if(note.getSubtitle().trim().isEmpty()) {
+            if (note.getSubtitle().trim().isEmpty()) {
                 txtNoteSubTitle.setVisibility(View.GONE);
             } else {
                 txtNoteSubTitle.setText(note.getSubtitle());
@@ -82,7 +91,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
             txtDateTime.setText(note.getDateTime());
 
             GradientDrawable gradientDrawable = (GradientDrawable) layoutNote.getBackground();
-            if(note.getColor() != null) {
+            if (note.getColor() != null) {
                 gradientDrawable.setColor(Color.parseColor(note.getColor()));
             } else {
                 gradientDrawable.setColor(Color.parseColor("#333333"));
@@ -95,11 +104,49 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
                 imageNote.setVisibility(View.GONE);
             }
 
-            if(note.getUrl() == null || note.getUrl().trim().isEmpty()) {
+            if (note.getUrl() == null || note.getUrl().trim().isEmpty()) {
                 txtLinkURL.setVisibility(View.GONE);
             } else {
                 txtLinkURL.setText(note.getUrl());
             }
+        }
+
+    }
+
+    public void searchNote(final String keyword) {
+        timer = new Timer();
+        timer.schedule(
+                new TimerTask() {
+                    @Override
+                    public void run() {
+                        if (keyword.trim().isEmpty()) {
+                            notes = noteSource;
+                        } else {
+                            List<Note> tmp = new ArrayList<>();
+                            for (Note note : noteSource) {
+                                if (note.getTitle().trim().toLowerCase().contains(keyword.trim().toLowerCase())
+                                        || note.getSubtitle().trim().toLowerCase().contains(keyword.trim().toLowerCase())
+                                        || note.getNoteContent().trim().toLowerCase().contains(keyword.trim().toLowerCase())
+                                        || note.getDateTime().trim().toLowerCase().contains(keyword.trim().toLowerCase())) {
+                                    tmp.add(note);
+                                }
+                            }
+                            notes = tmp;
+                        }
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+                                notifyDataSetChanged();
+                            }
+                        });
+                    }
+                }, 500
+        );
+    }
+
+    public void timerCancel() {
+        if (timer != null) {
+            timer.cancel();
         }
     }
 }
