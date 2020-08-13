@@ -58,6 +58,19 @@
         android:textSize="@dimen/_10sdp" />
 
     <TextView
+        android:id="@+id/textTimeReminder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/_8sdp"
+        android:layout_marginTop="@dimen/_4sdp"
+        android:layout_marginEnd="@dimen/_8sdp"
+        android:layout_marginBottom="@dimen/_4sdp"
+        android:fontFamily="@font/ubuntu_regular"
+        android:includeFontPadding="false"
+        android:textColor="@color/colorNoteSubtitleText"
+        android:textSize="@dimen/_10sdp" />
+
+    <TextView
         android:id="@+id/textDateTime"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

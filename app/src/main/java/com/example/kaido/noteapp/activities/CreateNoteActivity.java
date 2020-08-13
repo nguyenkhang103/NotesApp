@@ -9,6 +9,10 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
+import android.app.DatePickerDialog;
+import android.app.PendingIntent;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -27,10 +31,12 @@ import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.example.kaido.noteapp.R;
@@ -40,24 +46,28 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 public class CreateNoteActivity extends AppCompatActivity {
     private EditText inputNoteTitle, inputNoteSubtitle, inputNoteContent;
-    private TextView txtDateTime, txtLinkURL;
-    private ImageView imgDone, imgNote;
+    private TextView txtDateTime, txtLinkURL, txtTimeReminder;
+    private ImageView imgNote;
     private String selectedColor, selectedImagePath;
     private View viewSubtitleIndicator;
 
-    private LinearLayout layoutLinkURL, layoutDeleteNote;
+    private LinearLayout layoutLinkURL, layoutDeleteNote, layoutTimeReminder;
 
     private static final int REQUEST_CODE_STORAGE_PERMISSION = 1;
     private static final int REQUEST_CODE_SELECT_IMAGE = 2;
 
-    private AlertDialog alertDialog;
+    private AlertDialog alertDialog, alertDialogTimeReminder;
     private AlertDialog alertDialogDeleteNote;
 
     private Note selectedNote;
@@ -79,11 +89,13 @@ public class CreateNoteActivity extends AppCompatActivity {
         inputNoteSubtitle = findViewById(R.id.inputTextSubNote);
         inputNoteContent = findViewById(R.id.inputNoteContent);
         txtDateTime = findViewById(R.id.textDateTime);
-        imgDone = findViewById(R.id.imageDone);
+        ImageView imgDone = findViewById(R.id.imageDone);
         imgNote = findViewById(R.id.imageNote);
         viewSubtitleIndicator = findViewById(R.id.viewSubTitleIndicator);
         layoutLinkURL = findViewById(R.id.layoutLinkURL);
+        layoutTimeReminder = findViewById(R.id.layoutTimeReminder);
         txtLinkURL = findViewById(R.id.textLinkURL);
+        txtTimeReminder = findViewById(R.id.textTimeReminder);
 
         txtDateTime.setText(
                 new SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm a", Locale.getDefault()).format(new Date())
@@ -119,7 +131,13 @@ public class CreateNoteActivity extends AppCompatActivity {
                 layoutLinkURL.setVisibility(View.GONE);
             }
         });
-
+        findViewById(R.id.imageDeleteTimeReminder).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                txtTimeReminder.setText(null);
+                layoutTimeReminder.setVisibility(View.GONE);
+            }
+        });
         if (getIntent().getBooleanExtra("isQuickActionNote", false)) {
             String type = getIntent().getStringExtra("quickActionType");
             if (type != null) {
@@ -132,6 +150,10 @@ public class CreateNoteActivity extends AppCompatActivity {
                     txtLinkURL.setText(getIntent().getStringExtra("url"));
                     layoutLinkURL.setVisibility(View.VISIBLE);
                     findViewById(R.id.imageDeleteLinkWeb).setVisibility(View.VISIBLE);
+                } else if (type.equals("time_reminder")) {
+                    txtTimeReminder.setText(getIntent().getStringExtra("date_time"));
+                    layoutTimeReminder.setVisibility(View.VISIBLE);
+                    findViewById(R.id.imageDeleteTimeReminder).setVisibility(View.VISIBLE);
                 }
             }
         }
@@ -156,15 +178,17 @@ public class CreateNoteActivity extends AppCompatActivity {
             layoutLinkURL.setVisibility(View.VISIBLE);
             findViewById(R.id.imageDeleteLinkWeb).setVisibility(View.VISIBLE);
         }
+        if(selectedNote.getTimeReminder() != null && !selectedNote.getTimeReminder().toString().trim().isEmpty()) {
+            txtTimeReminder.setText(selectedNote.getTimeReminder().toString());
+            layoutTimeReminder.setVisibility(View.VISIBLE);
+            findViewById(R.id.imageDeleteTimeReminder).setVisibility(View.VISIBLE);
+        }
     }
 
 
     private void saveNote() {
         if (inputNoteTitle.getText().toString().trim().isEmpty()) {
             Toast.makeText(this, "Note title can't be empty!", Toast.LENGTH_SHORT).show();
-            return;
-        } else if (inputNoteContent.getText().toString().trim().isEmpty()) {
-            Toast.makeText(this, "Note content can't be empty!", Toast.LENGTH_SHORT).show();
             return;
         }
         final Note note = new Note();
@@ -174,8 +198,24 @@ public class CreateNoteActivity extends AppCompatActivity {
         note.setDateTime(txtDateTime.getText().toString());
         note.setColor(selectedColor);
         note.setImagePath(selectedImagePath);
+
         if(layoutLinkURL.getVisibility() == View.VISIBLE) {
             note.setUrl(txtLinkURL.getText().toString());
+        }
+        if(layoutTimeReminder.getVisibility() == View.VISIBLE) {
+            Date timeRemind = new Date(txtTimeReminder.getText().toString().trim());
+            note.setTimeReminder(timeRemind);
+            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+            calendar.setTime(timeRemind);
+            calendar.set(Calendar.SECOND, 0);
+            Intent intent = new Intent(CreateNoteActivity.this,NotifierAlarmActivity.class);
+            intent.putExtra("note title",note.getTitle());
+            intent.putExtra("time reminder",note.getTimeReminder().toString());
+            intent.putExtra("id",note.getId());
+
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(CreateNoteActivity.this,note.getId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP,calendar.getTimeInMillis(),pendingIntent);
         }
 
         if(selectedNote != null) {
@@ -323,6 +363,14 @@ public class CreateNoteActivity extends AppCompatActivity {
             public void onClick(View view) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 showAddURLDialog();
+            }
+        });
+
+        layoutMiscellaneous.findViewById(R.id.layoutAddTimeReminder).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                showAddTimeReminderDialog();
             }
         });
 
@@ -481,4 +529,76 @@ public class CreateNoteActivity extends AppCompatActivity {
         }
         alertDialogDeleteNote.show();
     }
+
+    private void showAddTimeReminderDialog() {
+        if(alertDialogTimeReminder == null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            View view = LayoutInflater.from(this).inflate(R.layout.layout_add_time_reminder, (ViewGroup) findViewById(R.id.layoutAddTimeReminderDialog));
+            builder.setView(view);
+            alertDialogTimeReminder = builder.create();
+
+            if(alertDialogTimeReminder.getWindow() != null) {
+                alertDialogTimeReminder.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+            }
+            final TextView textDateAndTime = view.findViewById(R.id.dateAndTime);
+            final Calendar newCalender = Calendar.getInstance();
+            view.findViewById(R.id.selectDate).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    DatePickerDialog datePickerDialog = new DatePickerDialog(CreateNoteActivity.this, new DatePickerDialog.OnDateSetListener() {
+                        @Override
+                        public void onDateSet(DatePicker datePicker, final int year, final int month, final int day) {
+                            final Calendar newDate = Calendar.getInstance();
+                            Calendar newTime = Calendar.getInstance();
+                            TimePickerDialog timePickerDialog = new TimePickerDialog(CreateNoteActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                                @Override
+                                public void onTimeSet(TimePicker timePicker, int hour, int minute) {
+                                    newDate.set(year,month,day,hour,minute,0);
+                                    Calendar currentDateTime = Calendar.getInstance();
+                                    if(newDate.getTimeInMillis() - currentDateTime.getTimeInMillis() > 0) {
+                                        textDateAndTime.setText(newDate.getTime().toString());
+                                    } else
+                                    Toast.makeText(CreateNoteActivity.this,"Invalid time",Toast.LENGTH_SHORT).show();
+                                }
+                            }, newTime.get(Calendar.HOUR_OF_DAY),newTime.get(Calendar.MINUTE), true);
+                            timePickerDialog.show();
+                        }
+                    },newCalender.get(Calendar.YEAR), newCalender.get(Calendar.MONTH), newCalender.get(Calendar.DAY_OF_MONTH));
+
+                    datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
+                    datePickerDialog.show();
+                }
+            });
+
+            view.findViewById(R.id.textAddTimeReminder).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    SimpleDateFormat sdf3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+                    Date timeRemind = null;
+                    try {
+                        timeRemind = sdf3.parse(textDateAndTime.getText().toString().trim());
+                        assert timeRemind != null;
+                        txtTimeReminder.setText(timeRemind.toString());
+                        Log.w("New time",timeRemind+"");
+                        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+                        calendar.setTime(timeRemind);
+                        calendar.set(Calendar.SECOND, 0);
+                        findViewById(R.id.layoutTimeReminder).setVisibility(View.VISIBLE);
+                        alertDialogTimeReminder.dismiss();
+
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            view.findViewById(R.id.textCancel).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    alertDialogTimeReminder.dismiss();
+                }
+            });
+        }
+        alertDialogTimeReminder.show();
+    }
+
 }

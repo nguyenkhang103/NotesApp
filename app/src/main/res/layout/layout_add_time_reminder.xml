@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layoutAddTimeReminderDialog"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:layout_margin="@dimen/_10sdp"
+    android:background="@drawable/background_dialog">
+
+    <ImageView
+        android:layout_width="@dimen/_24sdp"
+        android:layout_height="@dimen/_24sdp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:src="@drawable/ic_alarm"
+        android:tint="@color/colorIcons"
+        android:layout_marginStart="@dimen/_8sdp"
+        android:layout_marginEnd="@dimen/_8sdp"
+        android:layout_marginTop="@dimen/_10sdp"
+        android:id="@+id/imageAlarm"
+        android:contentDescription="@string/app_name" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/add_time_reminder"
+        android:textColor="@color/colorWhite"
+        android:textSize="@dimen/_13sdp"
+        android:fontFamily="@font/ubuntu_medium"
+        app:layout_constraintTop_toTopOf="@id/imageAlarm"
+        app:layout_constraintStart_toEndOf="@id/imageAlarm"
+        app:layout_constraintBottom_toBottomOf="@id/imageAlarm"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="@dimen/_8sdp"
+        android:layout_marginEnd="@dimen/_8sdp"/>
+
+    <LinearLayout
+        android:id="@+id/layoutAddDateTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="@dimen/_10sdp"
+        android:layout_marginStart="@dimen/_8sdp"
+        android:layout_marginEnd="@dimen/_8sdp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/imageAlarm">
+
+        <TextView
+            android:id="@+id/dateAndTime"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:textSize="@dimen/_13sdp"
+            android:textColor="@color/colorWhite"
+            android:fontFamily="@font/ubuntu_regular"
+            android:text="@string/date_and_time"
+            android:textColorHint="@color/colorWhite"
+            android:includeFontPadding="false"
+            android:gravity="center_vertical"
+            android:paddingStart="@dimen/_8sdp"/>
+        <Button
+            android:id="@+id/selectDate"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="0"
+            android:backgroundTint="@color/colorIcons"
+            android:text="@string/select"/>
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/textAddTimeReminder"
+        android:text="@string/add"
+        android:textColor="@color/colorAccent"
+        android:textSize="@dimen/_13sdp"
+        android:fontFamily="@font/ubuntu_medium"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/layoutAddDateTime"
+        app:layout_constraintTop_toBottomOf="@id/layoutAddDateTime"
+        android:layout_marginTop="@dimen/_8sdp"
+        android:layout_marginEnd="@dimen/_8sdp"
+        android:layout_marginBottom="@dimen/_8sdp"
+        android:padding="@dimen/_8sdp"
+        android:includeFontPadding="false"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/textCancel"
+        android:textColor="@color/colorAccent"
+        android:textSize="@dimen/_13sdp"
+        android:text="@string/cancel"
+        android:fontFamily="@font/ubuntu_medium"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/textAddTimeReminder"
+        app:layout_constraintTop_toBottomOf="@id/layoutAddDateTime"
+        android:layout_marginEnd="@dimen/_8sdp"
+        android:layout_marginStart="@dimen/_8sdp"
+        android:padding="@dimen/_8sdp"
+        android:includeFontPadding="false"/>
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

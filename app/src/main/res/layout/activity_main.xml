@@ -87,9 +87,9 @@
         <ImageView
             android:layout_width="@dimen/_24sdp"
             android:layout_height="@dimen/_24sdp"
-            android:src="@drawable/ic_add_circle_outline"
+            android:src="@drawable/ic_alarm"
             android:tint="@color/colorIcons"
-            android:id="@+id/imageAddNote"/>
+            android:id="@+id/imageTimeReminder"/>
         <ImageView
             android:layout_width="@dimen/_24sdp"
             android:layout_height="@dimen/_24sdp"

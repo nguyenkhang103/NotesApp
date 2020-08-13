@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -29,8 +31,11 @@ import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.example.kaido.noteapp.R;
@@ -40,8 +45,10 @@ import com.example.kaido.noteapp.entities.Note;
 import com.example.kaido.noteapp.listeners.NoteListener;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.TimeZone;
 
 public class MainActivity extends AppCompatActivity implements NoteListener {
     public static final int REQUEST_CODE_ADD_NOTE = 1;
@@ -56,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
 
     private int noteSelectedPosition = -1;
 
-    private AlertDialog alertDialogQuickActionLink;
+    private AlertDialog alertDialogQuickActionLink,alertDialogQuickActionTimeReminder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,13 +81,11 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
             }
         });
 
-        findViewById(R.id.imageAddNote).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.imageTimeReminder).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivityForResult(
-                        new Intent(getApplicationContext(), CreateNoteActivity.class),
-                        REQUEST_CODE_ADD_NOTE
-                );
+                showTimeReminderDialog();
+
             }
         });
 
@@ -161,6 +166,71 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
             });
         }
         alertDialogQuickActionLink.show();
+    }
+
+    private void showTimeReminderDialog() {
+        if(alertDialogQuickActionTimeReminder == null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            View view = LayoutInflater.from(this).inflate(R.layout.layout_add_time_reminder, (ViewGroup) findViewById(R.id.layoutAddTimeReminderDialog));
+            builder.setView(view);
+            alertDialogQuickActionTimeReminder = builder.create();
+
+            if(alertDialogQuickActionTimeReminder.getWindow() != null) {
+                alertDialogQuickActionTimeReminder.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+            }
+            final TextView textDateAndTime = view.findViewById(R.id.dateAndTime);
+            final Calendar newCalender = Calendar.getInstance();
+            view.findViewById(R.id.selectDate).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    DatePickerDialog datePickerDialog = new DatePickerDialog(MainActivity.this, new DatePickerDialog.OnDateSetListener() {
+                        @Override
+                        public void onDateSet(DatePicker datePicker, final int year, final int month, final int day) {
+                            final Calendar newDate = Calendar.getInstance();
+                            Calendar newTime = Calendar.getInstance();
+                            TimePickerDialog timePickerDialog = new TimePickerDialog(MainActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                                @Override
+                                public void onTimeSet(TimePicker timePicker, int hour, int minute) {
+                                    newDate.set(year,month,day,hour,minute,0);
+                                    Calendar currentDateTime = Calendar.getInstance();
+                                    if(newDate.getTimeInMillis() - currentDateTime.getTimeInMillis() > 0) {
+                                        textDateAndTime.setText(newDate.getTime().toString());
+                                    } else
+                                        Toast.makeText(getApplicationContext(),"Invalid time",Toast.LENGTH_SHORT).show();
+                                }
+                            }, newTime.get(Calendar.HOUR_OF_DAY),newTime.get(Calendar.MINUTE), true);
+                            timePickerDialog.show();
+                        }
+                    },newCalender.get(Calendar.YEAR), newCalender.get(Calendar.MONTH), newCalender.get(Calendar.DAY_OF_MONTH));
+
+                    datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
+                    datePickerDialog.show();
+                }
+            });
+
+            view.findViewById(R.id.textAddTimeReminder).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Date timeRemind = new Date(textDateAndTime.getText().toString().trim());
+                    Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+                    calendar.setTime(timeRemind);
+                    calendar.set(Calendar.SECOND, 0);
+                    Intent intent = new Intent(getApplicationContext(), CreateNoteActivity.class);
+                    intent.putExtra("isQuickActionNote", true);
+                    intent.putExtra("quickActionType", "time_reminder");
+                    intent.putExtra("date_time", timeRemind.toString());
+                    startActivityForResult(intent, REQUEST_CODE_ADD_NOTE);
+                    alertDialogQuickActionTimeReminder.dismiss();
+                }
+            });
+            view.findViewById(R.id.textCancel).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    alertDialogQuickActionTimeReminder.dismiss();
+                }
+            });
+        }
+        alertDialogQuickActionTimeReminder.show();
     }
 
     private void selectImage() {

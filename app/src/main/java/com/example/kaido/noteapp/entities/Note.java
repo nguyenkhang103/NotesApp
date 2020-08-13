@@ -4,8 +4,10 @@ import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
+import androidx.room.TypeConverters;
 
 import java.io.Serializable;
+import java.util.Date;
 
 @Entity(tableName = "notes")
 public class Note implements Serializable {
@@ -15,7 +17,7 @@ public class Note implements Serializable {
     private String title;
     @ColumnInfo(name = "subtitle")
     private String subtitle;
-    @ColumnInfo(name="date_time")
+    @ColumnInfo(name = "date_time")
     private String dateTime;
     @ColumnInfo(name = "note_content")
     private String noteContent;
@@ -23,8 +25,18 @@ public class Note implements Serializable {
     private String imagePath;
     @ColumnInfo(name = "color")
     private String color;
-    @ColumnInfo(name ="web_link")
+    @ColumnInfo(name = "web_link")
     private String url;
+    @TypeConverters(DateConverter.class)
+    Date timeReminder;
+
+    public Date getTimeReminder() {
+        return timeReminder;
+    }
+
+    public void setTimeReminder(Date timeReminder) {
+        this.timeReminder = timeReminder;
+    }
 
     public int getId() {
         return id;

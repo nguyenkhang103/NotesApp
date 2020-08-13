@@ -20,6 +20,7 @@ import com.example.kaido.noteapp.listeners.NoteListener;
 import com.makeramen.roundedimageview.RoundedImageView;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -67,7 +68,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
 
     public static class NoteHolder extends RecyclerView.ViewHolder {
 
-        TextView txtNoteTitle, txtNoteSubTitle, txtDateTime, txtLinkURL;
+        TextView txtNoteTitle, txtNoteSubTitle, txtDateTime, txtLinkURL, txtTimeReminder;
         LinearLayout layoutNote;
         RoundedImageView imageNote;
 
@@ -76,6 +77,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
             txtNoteTitle = itemView.findViewById(R.id.textNoteTitle);
             txtNoteSubTitle = itemView.findViewById(R.id.textNoteSubtitle);
             txtDateTime = itemView.findViewById(R.id.textDateTime);
+            txtTimeReminder = itemView.findViewById(R.id.textTimeReminder);
             layoutNote = itemView.findViewById(R.id.layout_item_note);
             imageNote = itemView.findViewById(R.id.imageImageNote);
             txtLinkURL = itemView.findViewById(R.id.textLinkURL);
@@ -108,6 +110,12 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
                 txtLinkURL.setVisibility(View.GONE);
             } else {
                 txtLinkURL.setText(note.getUrl());
+            }
+            if (note.getTimeReminder() == null) {
+                txtTimeReminder.setVisibility(View.GONE);
+            } else {
+                Date timeRemind = new Date(note.getTimeReminder().toString().trim());
+                txtTimeReminder.setText(timeRemind.toString());
             }
         }
 
