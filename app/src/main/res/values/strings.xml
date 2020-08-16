@@ -17,4 +17,5 @@
     <string name="add_time_reminder">Add Time Reminder</string>
     <string name="date_and_time">Date And Time</string>
     <string name="select">SELECT</string>
+    <string name="text_color">Text Color</string>
 </resources>

@@ -15,10 +15,13 @@ import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -26,15 +29,23 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.SpannableString;
+import android.text.TextWatcher;
+import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -58,9 +69,10 @@ import java.util.regex.Pattern;
 public class CreateNoteActivity extends AppCompatActivity {
     private EditText inputNoteTitle, inputNoteSubtitle, inputNoteContent;
     private TextView txtDateTime, txtLinkURL, txtTimeReminder;
-    private ImageView imgNote;
-    private String selectedColor, selectedImagePath;
+    private ImageView imgNote, imageEditText;
+    private String selectedColor, selectedImagePath, selectedTextColor;
     private View viewSubtitleIndicator;
+    private boolean isBold, isItalic, isUnderline;
 
     private LinearLayout layoutLinkURL, layoutDeleteNote, layoutTimeReminder;
 
@@ -96,6 +108,8 @@ public class CreateNoteActivity extends AppCompatActivity {
         layoutTimeReminder = findViewById(R.id.layoutTimeReminder);
         txtLinkURL = findViewById(R.id.textLinkURL);
         txtTimeReminder = findViewById(R.id.textTimeReminder);
+        imageEditText = findViewById(R.id.imageEditTextStyle);
+        inputNoteTitle.setTextSize(25);
 
         txtDateTime.setText(
                 new SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm a", Locale.getDefault()).format(new Date())
@@ -110,7 +124,11 @@ public class CreateNoteActivity extends AppCompatActivity {
         selectedColor = "#333333";
         selectedImagePath = "";
 
-        if(getIntent().getBooleanExtra("isViewOrUpdateNote", false)) {
+        isBold = false;
+        isItalic = false;
+        isUnderline = false;
+
+        if (getIntent().getBooleanExtra("isViewOrUpdateNote", false)) {
             selectedNote = (Note) getIntent().getSerializableExtra("note");
             setViewOrUpdateNote();
         }
@@ -120,7 +138,7 @@ public class CreateNoteActivity extends AppCompatActivity {
                 imgNote.setImageBitmap(null);
                 imgNote.setVisibility(View.GONE);
                 findViewById(R.id.imageDeleteImage).setVisibility(View.GONE);
-                selectedImagePath="";
+                selectedImagePath = "";
             }
         });
 
@@ -142,7 +160,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             String type = getIntent().getStringExtra("quickActionType");
             if (type != null) {
                 if (type.equals("images")) {
-                    selectedImagePath  = getIntent().getStringExtra("imagePath");
+                    selectedImagePath = getIntent().getStringExtra("imagePath");
                     imgNote.setImageBitmap(BitmapFactory.decodeFile(selectedImagePath));
                     imgNote.setVisibility(View.VISIBLE);
                     findViewById(R.id.imageDeleteImage).setVisibility(View.VISIBLE);
@@ -157,6 +175,28 @@ public class CreateNoteActivity extends AppCompatActivity {
                 }
             }
         }
+        inputNoteTitle.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                imageEditText.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void afterTextChanged(final Editable editable) {
+                imageEditText.setVisibility(View.VISIBLE);
+                imageEditText.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        initTextStyleLayout(inputNoteTitle);
+                    }
+                });
+            }
+        });
         initMiscellaneous();
         setSubtitleIndicator();
     }
@@ -166,19 +206,19 @@ public class CreateNoteActivity extends AppCompatActivity {
         inputNoteSubtitle.setText(selectedNote.getSubtitle());
         txtDateTime.setText(selectedNote.getDateTime());
         inputNoteContent.setText(selectedNote.getNoteContent());
-        if(selectedNote.getImagePath() != null && !selectedNote.getImagePath().trim().isEmpty()) {
+        if (selectedNote.getImagePath() != null && !selectedNote.getImagePath().trim().isEmpty()) {
             imgNote.setImageBitmap(BitmapFactory.decodeFile(selectedNote.getImagePath()));
             imgNote.setVisibility(View.VISIBLE);
             findViewById(R.id.imageDeleteImage).setVisibility(View.VISIBLE);
             selectedImagePath = selectedNote.getImagePath();
         }
 
-        if(selectedNote.getUrl() != null && !selectedNote.getUrl().trim().isEmpty()) {
+        if (selectedNote.getUrl() != null && !selectedNote.getUrl().trim().isEmpty()) {
             txtLinkURL.setText(selectedNote.getUrl());
             layoutLinkURL.setVisibility(View.VISIBLE);
             findViewById(R.id.imageDeleteLinkWeb).setVisibility(View.VISIBLE);
         }
-        if(selectedNote.getTimeReminder() != null && !selectedNote.getTimeReminder().toString().trim().isEmpty()) {
+        if (selectedNote.getTimeReminder() != null && !selectedNote.getTimeReminder().toString().trim().isEmpty()) {
             txtTimeReminder.setText(selectedNote.getTimeReminder().toString());
             layoutTimeReminder.setVisibility(View.VISIBLE);
             findViewById(R.id.imageDeleteTimeReminder).setVisibility(View.VISIBLE);
@@ -199,26 +239,27 @@ public class CreateNoteActivity extends AppCompatActivity {
         note.setColor(selectedColor);
         note.setImagePath(selectedImagePath);
 
-        if(layoutLinkURL.getVisibility() == View.VISIBLE) {
+
+        if (layoutLinkURL.getVisibility() == View.VISIBLE) {
             note.setUrl(txtLinkURL.getText().toString());
         }
-        if(layoutTimeReminder.getVisibility() == View.VISIBLE) {
+        if (layoutTimeReminder.getVisibility() == View.VISIBLE) {
             Date timeRemind = new Date(txtTimeReminder.getText().toString().trim());
             note.setTimeReminder(timeRemind);
             Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
             calendar.setTime(timeRemind);
             calendar.set(Calendar.SECOND, 0);
-            Intent intent = new Intent(CreateNoteActivity.this,NotifierAlarmActivity.class);
-            intent.putExtra("note title",note.getTitle());
-            intent.putExtra("time reminder",note.getTimeReminder().toString());
-            intent.putExtra("id",note.getId());
+            Intent intent = new Intent(CreateNoteActivity.this, NotifierAlarmActivity.class);
+            intent.putExtra("note title", note.getTitle());
+            intent.putExtra("time reminder", note.getTimeReminder().toString());
+            intent.putExtra("id", note.getId());
 
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(CreateNoteActivity.this,note.getId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(CreateNoteActivity.this, note.getId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
             AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP,calendar.getTimeInMillis(),pendingIntent);
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
         }
 
-        if(selectedNote != null) {
+        if (selectedNote != null) {
             note.setId(selectedNote.getId());
         }
 
@@ -240,6 +281,169 @@ public class CreateNoteActivity extends AppCompatActivity {
             }
         }
         new SaveNoteTask().execute();
+    }
+
+    private void initTextStyleLayout(final EditText editText) {
+        final LinearLayout layoutTextStyle = findViewById(R.id.layout_text_style);
+        final LinearLayout layoutMiscellaneous = findViewById(R.id.layout_miscellaneous);
+        final BottomSheetBehavior<LinearLayout> bottomSheetBehavior2 = BottomSheetBehavior.from(layoutTextStyle);
+        layoutMiscellaneous.setVisibility(View.GONE);
+        layoutTextStyle.setVisibility(View.VISIBLE);
+        bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_EXPANDED);
+        layoutTextStyle.findViewById(R.id.imageBackText).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                layoutTextStyle.setVisibility(View.GONE);
+                layoutMiscellaneous.setVisibility(View.VISIBLE);
+                initMiscellaneous();
+            }
+        });
+        final ImageView imgColor1 = layoutTextStyle.findViewById(R.id.imgColor1);
+        final ImageView imgColor2 = layoutTextStyle.findViewById(R.id.imgColor2);
+        final ImageView imgColor3 = layoutTextStyle.findViewById(R.id.imgColor3);
+        final ImageView imgColor4 = layoutTextStyle.findViewById(R.id.imgColor4);
+        final ImageView imgColor5 = layoutTextStyle.findViewById(R.id.imgColor5);
+        final ImageView imgBold = layoutTextStyle.findViewById(R.id.imageBold);
+        final ImageView imgItalic = layoutTextStyle.findViewById(R.id.imageItalic);
+        final ImageView imgUnderline = layoutTextStyle.findViewById(R.id.imageUnderline);
+
+
+        layoutTextStyle.findViewById(R.id.imgColor1).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editText.setTextColor(Color.WHITE);
+                imgColor1.setImageResource(R.drawable.ic_done);
+                imgColor2.setImageResource(0);
+                imgColor3.setImageResource(0);
+                imgColor4.setImageResource(0);
+                imgColor5.setImageResource(0);
+            }
+        });
+        layoutTextStyle.findViewById(R.id.imgColor2).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editText.setTextColor(Color.parseColor("#F4BF51"));
+                imgColor1.setImageResource(0);
+                imgColor2.setImageResource(R.drawable.ic_done);
+                imgColor3.setImageResource(0);
+                imgColor4.setImageResource(0);
+                imgColor5.setImageResource(0);
+            }
+        });
+
+        layoutTextStyle.findViewById(R.id.imgColor3).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editText.setTextColor(Color.parseColor("#DF3C37"));
+                imgColor1.setImageResource(0);
+                imgColor2.setImageResource(0);
+                imgColor3.setImageResource(R.drawable.ic_done);
+                imgColor4.setImageResource(0);
+                imgColor5.setImageResource(0);
+            }
+        });
+
+        layoutTextStyle.findViewById(R.id.imgColor4).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editText.setTextColor(Color.parseColor("#2437B8"));
+                imgColor1.setImageResource(0);
+                imgColor2.setImageResource(0);
+                imgColor3.setImageResource(0);
+                imgColor4.setImageResource(R.drawable.ic_done);
+                imgColor5.setImageResource(0);
+            }
+        });
+
+        layoutTextStyle.findViewById(R.id.imgColor5).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editText.setTextColor(Color.parseColor("#7B7B7B"));
+                imgColor1.setImageResource(0);
+                imgColor2.setImageResource(0);
+                imgColor3.setImageResource(0);
+                imgColor4.setImageResource(0);
+                imgColor5.setImageResource(R.drawable.ic_done);
+            }
+        });
+
+        layoutTextStyle.findViewById(R.id.imageBold).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isBold = !isBold;
+                if (isBold && isItalic) {
+                    editText.setTypeface(null, Typeface.BOLD_ITALIC);
+                    imgBold.setColorFilter(Color.parseColor("#000000"));
+                } else if (isBold) {
+                    editText.setTypeface(null, Typeface.BOLD);
+                    imgBold.setColorFilter(Color.parseColor("#000000"));
+                } else if(isItalic) {
+                    editText.setTypeface(null,Typeface.ITALIC);
+                    imgBold.setColorFilter(Color.parseColor("#A4A4A4"));
+                } else {
+                    editText.setTypeface(Typeface.DEFAULT);
+                    imgBold.setColorFilter(Color.parseColor("#A4A4A4"));
+                }
+
+            }
+        });
+        layoutTextStyle.findViewById(R.id.imageItalic).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isItalic = !isItalic;
+                if (isItalic && isBold) {
+                    editText.setTypeface(null, Typeface.BOLD_ITALIC);
+                    imgItalic.setColorFilter(Color.parseColor("#000000"));
+                } else if (isItalic) {
+                    editText.setTypeface(null, Typeface.ITALIC);
+                    imgItalic.setColorFilter(Color.parseColor("#000000"));
+
+                } else if (isBold){
+                    editText.setTypeface(null,Typeface.BOLD);
+                    imgItalic.setColorFilter(Color.parseColor("#A4A4A4"));
+
+                } else {
+                    editText.setTypeface(Typeface.DEFAULT);
+                    imgItalic.setColorFilter(Color.parseColor("#A4A4A4"));
+                }
+
+            }
+        });
+        layoutTextStyle.findViewById(R.id.imageUnderline).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isUnderline = !isUnderline;
+                if (isUnderline) {
+                    editText.setPaintFlags(editText.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+                    imgUnderline.setColorFilter(Color.parseColor("#000000"));
+                } else {
+                    editText.setPaintFlags(0);
+                    imgUnderline.setColorFilter(Color.parseColor("#A4A4A4"));
+                }
+
+            }
+        });
+        Spinner spinnerFontSize =  layoutTextStyle.findViewById(R.id.spinnerFontSize);
+        ArrayAdapter<CharSequence> arrayAdapter = ArrayAdapter.createFromResource(this, R.array.font_sizes, R.layout.layout_spinner_item);
+        arrayAdapter.setDropDownViewResource(R.layout.layout_dropdown_spinner_item);
+        spinnerFontSize.setAdapter(arrayAdapter);
+        spinnerFontSize.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if(adapterView.getSelectedItem().toString().equals("Small")) {
+                    editText.setTextSize(15);
+                } else if (adapterView.getSelectedItem().toString().equals("Large")){
+                    editText.setTextSize(35);
+                } else {
+                    editText.setTextSize(25);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
     }
 
     private void initMiscellaneous() {
@@ -326,18 +530,18 @@ public class CreateNoteActivity extends AppCompatActivity {
             }
         });
 
-        if(selectedNote != null && selectedNote.getColor() != null && !selectedNote.getColor().trim().isEmpty()) {
+        if (selectedNote != null && selectedNote.getColor() != null && !selectedNote.getColor().trim().isEmpty()) {
             switch (selectedNote.getColor()) {
                 case "#F4BF51":
                     layoutMiscellaneous.findViewById(R.id.imgColor2).performClick();
                     break;
-                case "#DF3C37" :
+                case "#DF3C37":
                     layoutMiscellaneous.findViewById(R.id.imgColor3).performClick();
                     break;
-                case "#2437B8" :
+                case "#2437B8":
                     layoutMiscellaneous.findViewById(R.id.imgColor4).performClick();
                     break;
-                case "#000000" :
+                case "#000000":
                     layoutMiscellaneous.findViewById(R.id.imgColor5).performClick();
                     break;
             }
@@ -385,7 +589,6 @@ public class CreateNoteActivity extends AppCompatActivity {
             });
         }
     }
-
 
 
     private void setSubtitleIndicator() {
@@ -454,7 +657,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             builder.setView(view);
 
             alertDialog = builder.create();
-            if(alertDialog.getWindow() != null) {
+            if (alertDialog.getWindow() != null) {
                 alertDialog.getWindow().setBackgroundDrawable(new ColorDrawable(0));
             }
             final EditText inputURL = view.findViewById(R.id.inputLinkURL);
@@ -462,7 +665,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             view.findViewById(R.id.textAddURL).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if(inputURL.getText().toString().trim().isEmpty()) {
+                    if (inputURL.getText().toString().trim().isEmpty()) {
                         Toast.makeText(CreateNoteActivity.this, "Enter URL", Toast.LENGTH_SHORT).show();
                     } else if (!Patterns.WEB_URL.matcher(inputURL.getText().toString().trim()).matches()) {
                         Toast.makeText(CreateNoteActivity.this, "URL Not Available", Toast.LENGTH_SHORT).show();
@@ -486,13 +689,13 @@ public class CreateNoteActivity extends AppCompatActivity {
     }
 
     private void showDeleteNoteDialog() {
-        if(alertDialogDeleteNote == null) {
+        if (alertDialogDeleteNote == null) {
             AlertDialog.Builder builder = new AlertDialog.Builder(CreateNoteActivity.this);
-            View view = LayoutInflater.from(this).inflate(R.layout.layout_delete_note_dialog,(ViewGroup) findViewById(R.id.layoutDeleteNoteDialog));
+            View view = LayoutInflater.from(this).inflate(R.layout.layout_delete_note_dialog, (ViewGroup) findViewById(R.id.layoutDeleteNoteDialog));
             builder.setView(view);
             alertDialogDeleteNote = builder.create();
 
-            if(alertDialogDeleteNote.getWindow() != null) {
+            if (alertDialogDeleteNote.getWindow() != null) {
                 alertDialogDeleteNote.getWindow().setBackgroundDrawable(new ColorDrawable(0));
             }
             view.findViewById(R.id.textDeleteNote).setOnClickListener(new View.OnClickListener() {
@@ -512,7 +715,7 @@ public class CreateNoteActivity extends AppCompatActivity {
                             super.onPostExecute(aVoid);
                             Intent intent = new Intent();
                             intent.putExtra("isNoteDeleted", true);
-                            setResult(RESULT_OK,intent);
+                            setResult(RESULT_OK, intent);
                             finish();
                         }
                     }
@@ -531,13 +734,13 @@ public class CreateNoteActivity extends AppCompatActivity {
     }
 
     private void showAddTimeReminderDialog() {
-        if(alertDialogTimeReminder == null) {
+        if (alertDialogTimeReminder == null) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             View view = LayoutInflater.from(this).inflate(R.layout.layout_add_time_reminder, (ViewGroup) findViewById(R.id.layoutAddTimeReminderDialog));
             builder.setView(view);
             alertDialogTimeReminder = builder.create();
 
-            if(alertDialogTimeReminder.getWindow() != null) {
+            if (alertDialogTimeReminder.getWindow() != null) {
                 alertDialogTimeReminder.getWindow().setBackgroundDrawable(new ColorDrawable(0));
             }
             final TextView textDateAndTime = view.findViewById(R.id.dateAndTime);
@@ -553,17 +756,17 @@ public class CreateNoteActivity extends AppCompatActivity {
                             TimePickerDialog timePickerDialog = new TimePickerDialog(CreateNoteActivity.this, new TimePickerDialog.OnTimeSetListener() {
                                 @Override
                                 public void onTimeSet(TimePicker timePicker, int hour, int minute) {
-                                    newDate.set(year,month,day,hour,minute,0);
+                                    newDate.set(year, month, day, hour, minute, 0);
                                     Calendar currentDateTime = Calendar.getInstance();
-                                    if(newDate.getTimeInMillis() - currentDateTime.getTimeInMillis() > 0) {
+                                    if (newDate.getTimeInMillis() - currentDateTime.getTimeInMillis() > 0) {
                                         textDateAndTime.setText(newDate.getTime().toString());
                                     } else
-                                    Toast.makeText(CreateNoteActivity.this,"Invalid time",Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(CreateNoteActivity.this, "Invalid time", Toast.LENGTH_SHORT).show();
                                 }
-                            }, newTime.get(Calendar.HOUR_OF_DAY),newTime.get(Calendar.MINUTE), true);
+                            }, newTime.get(Calendar.HOUR_OF_DAY), newTime.get(Calendar.MINUTE), true);
                             timePickerDialog.show();
                         }
-                    },newCalender.get(Calendar.YEAR), newCalender.get(Calendar.MONTH), newCalender.get(Calendar.DAY_OF_MONTH));
+                    }, newCalender.get(Calendar.YEAR), newCalender.get(Calendar.MONTH), newCalender.get(Calendar.DAY_OF_MONTH));
 
                     datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
                     datePickerDialog.show();
@@ -579,7 +782,7 @@ public class CreateNoteActivity extends AppCompatActivity {
                         timeRemind = sdf3.parse(textDateAndTime.getText().toString().trim());
                         assert timeRemind != null;
                         txtTimeReminder.setText(timeRemind.toString());
-                        Log.w("New time",timeRemind+"");
+                        Log.w("New time", timeRemind + "");
                         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
                         calendar.setTime(timeRemind);
                         calendar.set(Calendar.SECOND, 0);
