@@ -13,13 +13,13 @@ import androidx.sqlite.db.SupportSQLiteOpenHelper;
 import com.example.kaido.noteapp.dao.NoteDAO;
 import com.example.kaido.noteapp.entities.Note;
 
-@Database(entities = Note.class, version = 1, exportSchema = false)
+@Database(entities = Note.class, version = 5, exportSchema = false)
 public abstract class NoteDB extends RoomDatabase {
     public static NoteDB noteDB;
 
     public static synchronized NoteDB getNoteDB(Context context) {
         if (noteDB == null) {
-            noteDB = Room.databaseBuilder(context, NoteDB.class, "notes_db").build();
+            noteDB = Room.databaseBuilder(context, NoteDB.class, "notes_db").fallbackToDestructiveMigration().build();
         }
         return noteDB;
     }

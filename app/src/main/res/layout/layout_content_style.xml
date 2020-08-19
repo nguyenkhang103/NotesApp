@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/layout_text_style"
+    android:id="@+id/layout_content_style"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/background_miscellaneous"
@@ -27,7 +27,7 @@
             android:tint="@color/colorIcons" />
 
         <TextView
-            android:id="@+id/textTitleStyle"
+            android:id="@+id/textContentStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginEnd="@dimen/_20sdp"

@@ -6,6 +6,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -25,6 +26,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.media.ResourceBusyException;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -32,9 +34,11 @@ import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.SpannableString;
 import android.text.TextWatcher;
+import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.util.Patterns;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -69,10 +73,13 @@ import java.util.regex.Pattern;
 public class CreateNoteActivity extends AppCompatActivity {
     private EditText inputNoteTitle, inputNoteSubtitle, inputNoteContent;
     private TextView txtDateTime, txtLinkURL, txtTimeReminder;
-    private ImageView imgNote, imageEditText;
-    private String selectedColor, selectedImagePath, selectedTextColor;
+    private ImageView imgNote, imageEditText, imageEditTextContent;
+    private String selectedColor, titleFontFamily, contentFontFamily;
+    private String selectedImagePath;
+    private int selectedTextColor, selectedContentColor;
     private View viewSubtitleIndicator;
-    private boolean isBold, isItalic, isUnderline;
+    private boolean isBold, isItalic, isUnderline, isLeft, isCenter, isRight;
+    private boolean isBoldContent, isItalicContent, isUnderlineContent, isLeftContent, isCenterContent, isRightContent;
 
     private LinearLayout layoutLinkURL, layoutDeleteNote, layoutTimeReminder;
 
@@ -83,6 +90,8 @@ public class CreateNoteActivity extends AppCompatActivity {
     private AlertDialog alertDialogDeleteNote;
 
     private Note selectedNote;
+    private int titleTextSize, contentTextSize;
+    private String titleAlgin, contentAlign;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,8 +118,15 @@ public class CreateNoteActivity extends AppCompatActivity {
         txtLinkURL = findViewById(R.id.textLinkURL);
         txtTimeReminder = findViewById(R.id.textTimeReminder);
         imageEditText = findViewById(R.id.imageEditTextStyle);
+        imageEditTextContent = findViewById(R.id.imageEditTextStyleContent);
         inputNoteTitle.setTextSize(25);
-
+        inputNoteTitle.setGravity(Gravity.START);
+        Typeface typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.ubuntu_bold);
+        inputNoteTitle.setTypeface(typeface);
+        inputNoteContent.setTextSize(15);
+        inputNoteContent.setGravity(Gravity.START);
+        Typeface typefaceContent = ResourcesCompat.getFont(getApplicationContext(), R.font.ubuntu_regular);
+        inputNoteContent.setTypeface(typefaceContent);
         txtDateTime.setText(
                 new SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm a", Locale.getDefault()).format(new Date())
         );
@@ -127,6 +143,17 @@ public class CreateNoteActivity extends AppCompatActivity {
         isBold = false;
         isItalic = false;
         isUnderline = false;
+        isLeft = true;
+        isCenter = false;
+        isRight = false;
+        titleAlgin = "START";
+        isBoldContent = false;
+        isItalicContent = false;
+        isUnderlineContent = false;
+        isLeftContent = true;
+        isCenterContent = false;
+        isRightContent = false;
+        contentAlign = "START";
 
         if (getIntent().getBooleanExtra("isViewOrUpdateNote", false)) {
             selectedNote = (Note) getIntent().getSerializableExtra("note");
@@ -197,27 +224,244 @@ public class CreateNoteActivity extends AppCompatActivity {
                 });
             }
         });
+
+        inputNoteContent.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                imageEditTextContent.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void afterTextChanged(final Editable editable) {
+                imageEditTextContent.setVisibility(View.VISIBLE);
+                imageEditTextContent.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        initTextStyleContentLayout(inputNoteContent);
+                    }
+                });
+            }
+        });
         initMiscellaneous();
         setSubtitleIndicator();
     }
 
     private void setViewOrUpdateNote() {
+        Typeface typeface, typefaceContent;
+        // title
         inputNoteTitle.setText(selectedNote.getTitle());
+        if (selectedNote != null && !selectedNote.getTitle().trim().isEmpty()) {
+            imageEditText.setVisibility(View.VISIBLE);
+            initTextStyleLayout(inputNoteTitle);
+        }
+
+        if (selectedNote != null && selectedNote.getTitleColor() != 0) {
+            inputNoteTitle.setTextColor(selectedNote.getTitleColor());
+        } else {
+            inputNoteTitle.setTextColor(Color.WHITE);
+        }
+
+        assert selectedNote != null;
+        switch (selectedNote.getTitleFontFamily()) {
+            case "Harmonia":
+                if (selectedNote.isTitleBold() && selectedNote.isTitleItalic()) {
+                    typeface = ResourcesCompat.getFont(this, R.font.harmonia_bold_italic);
+                } else if (selectedNote.isTitleBold()) {
+                    typeface = ResourcesCompat.getFont(this, R.font.harmonia_bold);
+                } else if (selectedNote.isTitleItalic()) {
+                    typeface = ResourcesCompat.getFont(this, R.font.harmonia_italic);
+                } else {
+                    typeface = ResourcesCompat.getFont(this, R.font.harmonia_regular);
+                }
+                inputNoteTitle.setTypeface(typeface);
+                break;
+            case "OpenSans":
+                if (selectedNote.isTitleBold() && selectedNote.isTitleItalic()) {
+                    typeface = ResourcesCompat.getFont(this, R.font.opensans_bold_italic);
+                } else if (selectedNote.isTitleBold()) {
+                    typeface = ResourcesCompat.getFont(this, R.font.opensans_bold);
+                } else if (selectedNote.isTitleItalic()) {
+                    typeface = ResourcesCompat.getFont(this, R.font.opensans_italic);
+                } else {
+                    typeface = ResourcesCompat.getFont(this, R.font.opensans_regular);
+                }
+                inputNoteTitle.setTypeface(typeface);
+                break;
+            case "Roboto":
+                if (selectedNote.isTitleBold() && selectedNote.isTitleItalic()) {
+                    typeface = ResourcesCompat.getFont(this, R.font.roboto_bold_italic);
+                } else if (selectedNote.isTitleBold()) {
+                    typeface = ResourcesCompat.getFont(this, R.font.roboto_bold);
+                } else if (selectedNote.isTitleItalic()) {
+                    typeface = ResourcesCompat.getFont(this, R.font.roboto_italic);
+                } else {
+                    typeface = ResourcesCompat.getFont(this, R.font.roboto_regular);
+                }
+                inputNoteTitle.setTypeface(typeface);
+                break;
+            default:
+                if (selectedNote.isTitleBold() && selectedNote.isTitleItalic()) {
+                    typeface = ResourcesCompat.getFont(this, R.font.ubuntu_bold_italic);
+                } else if (selectedNote.isTitleBold()) {
+                    typeface = ResourcesCompat.getFont(this, R.font.ubuntu_bold);
+                } else if (selectedNote.isTitleItalic()) {
+                    typeface = ResourcesCompat.getFont(this, R.font.ubuntu_italic);
+                } else {
+                    typeface = ResourcesCompat.getFont(this, R.font.ubuntu_regular);
+                }
+                inputNoteTitle.setTypeface(typeface);
+                break;
+        }
+
+        if (selectedNote.getTitleFontSize() == 15) {
+            inputNoteTitle.setTextSize(15);
+        } else if (selectedNote.getTitleFontSize() == 35) {
+            inputNoteTitle.setTextSize(35);
+        } else {
+            inputNoteTitle.setTextSize(25);
+        }
+        SpannableString content = new SpannableString(selectedNote.getTitle());
+
+
+        if (selectedNote.isTitleBold() && selectedNote.isTitleItalic()) {
+            content.setSpan(new StyleSpan(Typeface.BOLD_ITALIC), 0, content.length(), 0);
+        } else if (selectedNote.isTitleBold() && !selectedNote.isTitleItalic()) {
+            content.setSpan(new StyleSpan(Typeface.BOLD), 0, content.length(), 0);
+        } else {
+            content.setSpan(new StyleSpan(Typeface.ITALIC), 0, content.length(), 0);
+        }
+        inputNoteTitle.setText(content);
+
+        if (selectedNote.isTitleUnderLined()) {
+            inputNoteTitle.setPaintFlags(inputNoteTitle.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+        }
+
+        if (selectedNote.getTitleAlign() == null || selectedNote.getTitleAlign().equals("START")) {
+            inputNoteTitle.setGravity(Gravity.START);
+        } else if (selectedNote.getTitleAlign().equals("CENTER")) {
+            inputNoteTitle.setGravity(Gravity.CENTER);
+        } else {
+            inputNoteTitle.setGravity(Gravity.END);
+        }
+        //subtitle
         inputNoteSubtitle.setText(selectedNote.getSubtitle());
+        //datetime
         txtDateTime.setText(selectedNote.getDateTime());
+
+        //content
         inputNoteContent.setText(selectedNote.getNoteContent());
+        if (selectedNote != null && !selectedNote.getNoteContent().trim().isEmpty()) {
+            imageEditTextContent.setVisibility(View.VISIBLE);
+            initTextStyleLayout(inputNoteContent);
+        }
+
+        if (selectedNote != null && selectedNote.getContentColor() != 0) {
+            inputNoteContent.setTextColor(selectedNote.getContentColor());
+        } else {
+            inputNoteContent.setTextColor(Color.WHITE);
+        }
+
+        assert selectedNote != null;
+        switch (selectedNote.getContentFontFamily()) {
+            case "Harmonia":
+                if (selectedNote.isContentBold() && selectedNote.isContentItalic()) {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.harmonia_bold_italic);
+                } else if (selectedNote.isContentBold()) {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.harmonia_bold);
+                } else if (selectedNote.isContentItalic()) {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.harmonia_italic);
+                } else {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.harmonia_regular);
+                }
+                inputNoteTitle.setTypeface(typefaceContent);
+                break;
+            case "OpenSans":
+                if (selectedNote.isContentBold() && selectedNote.isContentItalic()) {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.opensans_bold_italic);
+                } else if (selectedNote.isContentBold()) {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.opensans_bold);
+                } else if (selectedNote.isContentItalic()) {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.opensans_italic);
+                } else {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.opensans_regular);
+                }
+                inputNoteTitle.setTypeface(typefaceContent);
+                break;
+            case "Roboto":
+                if (selectedNote.isContentBold() && selectedNote.isContentItalic()) {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.roboto_bold_italic);
+                } else if (selectedNote.isContentBold()) {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.roboto_bold);
+                } else if (selectedNote.isContentItalic()) {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.roboto_italic);
+                } else {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.roboto_regular);
+                }
+                inputNoteTitle.setTypeface(typefaceContent);
+                break;
+            default:
+                if (selectedNote.isContentBold() && selectedNote.isContentItalic()) {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.ubuntu_bold_italic);
+                } else if (selectedNote.isContentBold()) {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.ubuntu_bold);
+                } else if (selectedNote.isContentItalic()) {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.ubuntu_italic);
+                } else {
+                    typefaceContent = ResourcesCompat.getFont(this, R.font.ubuntu_regular);
+                }
+                inputNoteTitle.setTypeface(typefaceContent);
+                break;
+        }
+
+        if (selectedNote.getContentFontSize() == 15) {
+            inputNoteContent.setTextSize(15);
+        } else if (selectedNote.getContentFontSize() == 35) {
+            inputNoteContent.setTextSize(35);
+        } else {
+            inputNoteContent.setTextSize(25);
+        }
+        SpannableString contentNote = new SpannableString(selectedNote.getNoteContent());
+
+
+        if (selectedNote.isContentBold() && selectedNote.isContentItalic()) {
+            contentNote.setSpan(new StyleSpan(Typeface.BOLD_ITALIC), 0, content.length(), 0);
+        } else if (selectedNote.isContentBold() && !selectedNote.isContentItalic()) {
+            contentNote.setSpan(new StyleSpan(Typeface.BOLD), 0, content.length(), 0);
+        } else {
+            contentNote.setSpan(new StyleSpan(Typeface.ITALIC), 0, content.length(), 0);
+        }
+        inputNoteContent.setText(content);
+
+        if (selectedNote.isContentUnderLined()) {
+            inputNoteContent.setPaintFlags(inputNoteContent.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+        }
+
+        if (selectedNote.getContentAlign() == null || selectedNote.getContentAlign().equals("START")) {
+            inputNoteContent.setGravity(Gravity.START);
+        } else if (selectedNote.getContentAlign().equals("CENTER")) {
+            inputNoteContent.setGravity(Gravity.CENTER);
+        } else {
+            inputNoteContent.setGravity(Gravity.END);
+        }
+        //image
         if (selectedNote.getImagePath() != null && !selectedNote.getImagePath().trim().isEmpty()) {
             imgNote.setImageBitmap(BitmapFactory.decodeFile(selectedNote.getImagePath()));
             imgNote.setVisibility(View.VISIBLE);
             findViewById(R.id.imageDeleteImage).setVisibility(View.VISIBLE);
             selectedImagePath = selectedNote.getImagePath();
         }
-
+        //url
         if (selectedNote.getUrl() != null && !selectedNote.getUrl().trim().isEmpty()) {
             txtLinkURL.setText(selectedNote.getUrl());
             layoutLinkURL.setVisibility(View.VISIBLE);
             findViewById(R.id.imageDeleteLinkWeb).setVisibility(View.VISIBLE);
         }
+        //time reminder
         if (selectedNote.getTimeReminder() != null && !selectedNote.getTimeReminder().toString().trim().isEmpty()) {
             txtTimeReminder.setText(selectedNote.getTimeReminder().toString());
             layoutTimeReminder.setVisibility(View.VISIBLE);
@@ -238,6 +482,22 @@ public class CreateNoteActivity extends AppCompatActivity {
         note.setDateTime(txtDateTime.getText().toString());
         note.setColor(selectedColor);
         note.setImagePath(selectedImagePath);
+        //title
+        note.setTitleColor(selectedTextColor);
+        note.setTitleFontFamily(titleFontFamily);
+        note.setTitleFontSize(titleTextSize);
+        note.setTitleBold(isBold);
+        note.setTitleItalic(isItalic);
+        note.setTitleUnderLined(isUnderline);
+        note.setTitleAlign(titleAlgin);
+        //content
+        note.setContentColor(selectedContentColor);
+        note.setContentFontFamily(contentFontFamily);
+        note.setContentFontSize(contentTextSize);
+        note.setContentBold(isBoldContent);
+        note.setContentItalic(isItalicContent);
+        note.setContentUnderLined(isUnderlineContent);
+        note.setContentAlign(contentAlign);
 
 
         if (layoutLinkURL.getVisibility() == View.VISIBLE) {
@@ -283,19 +543,438 @@ public class CreateNoteActivity extends AppCompatActivity {
         new SaveNoteTask().execute();
     }
 
+    private void initTextStyleContentLayout(final EditText editText) {
+        final LinearLayout layoutContentStyle = findViewById(R.id.layout_content_style);
+        final LinearLayout layoutMiscellaneous = findViewById(R.id.layout_miscellaneous);
+        final LinearLayout layoutTextStyle = findViewById(R.id.layout_text_style);
+        final BottomSheetBehavior<LinearLayout> bottomSheetBehavior2 = BottomSheetBehavior.from(layoutContentStyle);
+        layoutMiscellaneous.setVisibility(View.GONE);
+        layoutTextStyle.setVisibility(View.GONE);
+        layoutContentStyle.setVisibility(View.VISIBLE);
+        bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_EXPANDED);
+        layoutTextStyle.findViewById(R.id.imageBackText).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                layoutContentStyle.setVisibility(View.GONE);
+                layoutTextStyle.setVisibility(View.GONE);
+                layoutMiscellaneous.setVisibility(View.VISIBLE);
+                initMiscellaneous();
+            }
+        });
+
+        layoutTextStyle.findViewById(R.id.textContentStyle).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+               if(bottomSheetBehavior2.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+                   bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_COLLAPSED);
+               } else {
+                   bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_EXPANDED);
+               }
+            }
+        });
+        final ImageView imgColor1 = layoutContentStyle.findViewById(R.id.imgColor1);
+        final ImageView imgColor2 = layoutContentStyle.findViewById(R.id.imgColor2);
+        final ImageView imgColor3 = layoutContentStyle.findViewById(R.id.imgColor3);
+        final ImageView imgColor4 = layoutContentStyle.findViewById(R.id.imgColor4);
+        final ImageView imgColor5 = layoutContentStyle.findViewById(R.id.imgColor5);
+        final ImageView imgBold = layoutContentStyle.findViewById(R.id.imageBold);
+        final ImageView imgItalic = layoutContentStyle.findViewById(R.id.imageItalic);
+        final ImageView imgUnderline = layoutContentStyle.findViewById(R.id.imageUnderline);
+        final ImageView imgAlignLeft = layoutContentStyle.findViewById(R.id.imageAlignLeft);
+        final ImageView imgAlignCenter = layoutContentStyle.findViewById(R.id.imageAlignCenter);
+        final ImageView imgAlignRight = layoutContentStyle.findViewById(R.id.imageAlignRight);
+
+        if (editText.getGravity() == 8388659) {
+            Log.d("START", true + "");
+            imgAlignLeft.setColorFilter(Color.parseColor("#000000"));
+        }
+
+        layoutContentStyle.findViewById(R.id.imgColor1).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editText.setTextColor(Color.WHITE);
+                selectedContentColor = Color.WHITE;
+                imgColor1.setImageResource(R.drawable.ic_done);
+                imgColor2.setImageResource(0);
+                imgColor3.setImageResource(0);
+                imgColor4.setImageResource(0);
+                imgColor5.setImageResource(0);
+            }
+        });
+        layoutContentStyle.findViewById(R.id.imgColor2).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editText.setTextColor(Color.parseColor("#F4BF51"));
+                selectedContentColor = Color.parseColor("#F4BF51");
+                imgColor1.setImageResource(0);
+                imgColor2.setImageResource(R.drawable.ic_done);
+                imgColor3.setImageResource(0);
+                imgColor4.setImageResource(0);
+                imgColor5.setImageResource(0);
+            }
+        });
+
+        layoutContentStyle.findViewById(R.id.imgColor3).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editText.setTextColor(Color.parseColor("#DF3C37"));
+                selectedContentColor = Color.parseColor("#DF3C37");
+                imgColor1.setImageResource(0);
+                imgColor2.setImageResource(0);
+                imgColor3.setImageResource(R.drawable.ic_done);
+                imgColor4.setImageResource(0);
+                imgColor5.setImageResource(0);
+            }
+        });
+
+        layoutContentStyle.findViewById(R.id.imgColor4).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editText.setTextColor(Color.parseColor("#2437B8"));
+                selectedContentColor = Color.parseColor("#2437B8");
+                imgColor1.setImageResource(0);
+                imgColor2.setImageResource(0);
+                imgColor3.setImageResource(0);
+                imgColor4.setImageResource(R.drawable.ic_done);
+                imgColor5.setImageResource(0);
+            }
+        });
+
+        layoutContentStyle.findViewById(R.id.imgColor5).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editText.setTextColor(Color.parseColor("#7B7B7B"));
+                selectedContentColor = Color.parseColor("#7B7B7B");
+                imgColor1.setImageResource(0);
+                imgColor2.setImageResource(0);
+                imgColor3.setImageResource(0);
+                imgColor4.setImageResource(0);
+                imgColor5.setImageResource(R.drawable.ic_done);
+            }
+        });
+
+        if (selectedNote != null && selectedNote.getContentColor() != 0) {
+            if (selectedNote.getContentColor() == Color.parseColor("#F4BF51")) {
+                layoutContentStyle.findViewById(R.id.imgColor2).performClick();
+            } else if (selectedNote.getContentColor() == Color.parseColor("#DF3C37")) {
+                layoutContentStyle.findViewById(R.id.imgColor3).performClick();
+            } else if (selectedNote.getContentColor() == Color.parseColor("#2437B8")) {
+                layoutContentStyle.findViewById(R.id.imgColor4).performClick();
+            } else if (selectedNote.getContentColor() == Color.parseColor("#7B7B7B")) {
+                layoutContentStyle.findViewById(R.id.imgColor5).performClick();
+            }
+        }
+
+        if (selectedNote != null) {
+            if (selectedNote.getContentAlign() == null || selectedNote.getContentAlign().equals("START")) {
+                imgAlignLeft.setColorFilter(Color.parseColor("#000000"));
+                imgAlignCenter.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgAlignRight.setColorFilter(Color.parseColor("#A4A4A4"));
+            } else if (selectedNote.getContentAlign().equals("CENTER")) {
+                imgAlignCenter.setColorFilter(Color.parseColor("#000000"));
+                imgAlignLeft.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgAlignRight.setColorFilter(Color.parseColor("#A4A4A4"));
+            } else {
+                imgAlignCenter.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgAlignLeft.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgAlignRight.setColorFilter(Color.parseColor("#000000"));
+            }
+        }
+        layoutContentStyle.findViewById(R.id.imageBold).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isBold = !isBold;
+                if (isBold && isItalic) {
+                    editText.setTypeface(null, Typeface.BOLD_ITALIC);
+                    imgBold.setColorFilter(Color.parseColor("#000000"));
+                } else if (isBold) {
+                    editText.setTypeface(null, Typeface.BOLD);
+                    imgBold.setColorFilter(Color.parseColor("#000000"));
+                } else if (isItalic) {
+                    editText.setTypeface(null, Typeface.ITALIC);
+                    imgBold.setColorFilter(Color.parseColor("#A4A4A4"));
+                } else {
+                    editText.setTypeface(Typeface.DEFAULT);
+                    imgBold.setColorFilter(Color.parseColor("#A4A4A4"));
+                }
+
+            }
+        });
+        layoutContentStyle.findViewById(R.id.imageItalic).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isItalic = !isItalic;
+                if (isItalic && isBold) {
+                    editText.setTypeface(null, Typeface.BOLD_ITALIC);
+                    imgItalic.setColorFilter(Color.parseColor("#000000"));
+                } else if (isItalic) {
+                    editText.setTypeface(null, Typeface.ITALIC);
+                    imgItalic.setColorFilter(Color.parseColor("#000000"));
+
+                } else if (isBold) {
+                    editText.setTypeface(null, Typeface.BOLD);
+                    imgItalic.setColorFilter(Color.parseColor("#A4A4A4"));
+
+                } else {
+                    editText.setTypeface(Typeface.DEFAULT);
+                    imgItalic.setColorFilter(Color.parseColor("#A4A4A4"));
+                }
+
+            }
+        });
+        layoutContentStyle.findViewById(R.id.imageUnderline).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isUnderline = !isUnderline;
+                if (isUnderline) {
+                    editText.setPaintFlags(editText.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
+                    imgUnderline.setColorFilter(Color.parseColor("#000000"));
+                } else {
+                    editText.setPaintFlags(0);
+                    imgUnderline.setColorFilter(Color.parseColor("#A4A4A4"));
+                }
+
+            }
+        });
+        if (selectedNote != null) {
+            if (selectedNote.isContentBold() && selectedNote.isContentItalic() && selectedNote.isContentUnderLined()) {
+                imgBold.setColorFilter(Color.parseColor("#000000"));
+                imgItalic.setColorFilter(Color.parseColor("#000000"));
+                imgUnderline.setColorFilter(Color.parseColor("#000000"));
+            } else if (selectedNote.isContentBold() && selectedNote.isContentItalic() && !selectedNote.isContentUnderLined()) {
+                imgItalic.setColorFilter(Color.parseColor("#000000"));
+                imgBold.setColorFilter(Color.parseColor("#000000"));
+                imgUnderline.setColorFilter(Color.parseColor("#A4A4A4"));
+            } else if (selectedNote.isContentBold() && !selectedNote.isContentItalic() && !selectedNote.isContentUnderLined()) {
+                imgUnderline.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgBold.setColorFilter(Color.parseColor("#000000"));
+                imgItalic.setColorFilter(Color.parseColor("#A4A4A4"));
+            } else if (selectedNote.isContentBold() && !selectedNote.isContentItalic() && selectedNote.isContentUnderLined()) {
+                imgUnderline.setColorFilter(Color.parseColor("#000000"));
+                imgBold.setColorFilter(Color.parseColor("#000000"));
+                imgItalic.setColorFilter(Color.parseColor("#A4A4A4"));
+            } else if (!selectedNote.isContentBold() && selectedNote.isContentItalic() && !selectedNote.isContentUnderLined()) {
+                imgUnderline.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgBold.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgItalic.setColorFilter(Color.parseColor("#000000"));
+            } else if (!selectedNote.isContentBold() && selectedNote.isContentItalic() && selectedNote.isContentUnderLined()) {
+                imgUnderline.setColorFilter(Color.parseColor("#000000"));
+                imgBold.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgItalic.setColorFilter(Color.parseColor("#000000"));
+            } else if (!selectedNote.isContentBold() && !selectedNote.isContentItalic() && selectedNote.isContentUnderLined()) {
+                imgUnderline.setColorFilter(Color.parseColor("#000000"));
+                imgBold.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgItalic.setColorFilter(Color.parseColor("#A4A4A4"));
+            } else {
+                imgUnderline.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgBold.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgItalic.setColorFilter(Color.parseColor("#A4A4A4"));
+            }
+        }
+
+        layoutContentStyle.findViewById(R.id.imageAlignLeft).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isLeft = !isLeft;
+                if (isLeft) {
+                    if (isCenter && !isRight) {
+                        isCenter = false;
+                        imgAlignCenter.setColorFilter(Color.parseColor("#A4A4A4"));
+
+                    } else if (isRight && !isCenter) {
+                        isRight = false;
+                        imgAlignRight.setColorFilter(Color.parseColor("#A4A4A4"));
+                    }
+                    editText.setGravity(Gravity.START);
+                    imgAlignLeft.setColorFilter(Color.parseColor("#000000"));
+                    contentAlign = "START";
+                }
+            }
+        });
+        layoutContentStyle.findViewById(R.id.imageAlignCenter).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isCenter = !isCenter;
+                if (isCenter) {
+                    if (isLeft && !isRight) {
+                        isLeft = false;
+                        imgAlignLeft.setColorFilter(Color.parseColor("#A4A4A4"));
+                    } else if (isRight && !isLeft) {
+                        isRight = false;
+                        imgAlignRight.setColorFilter(Color.parseColor("#A4A4A4"));
+                    }
+                    editText.setGravity(Gravity.CENTER);
+                    contentAlign = "CENTER";
+                    imgAlignCenter.setColorFilter(Color.parseColor("#000000"));
+                } else {
+                    imgAlignCenter.setColorFilter(Color.parseColor("#A4A4A4"));
+                }
+            }
+        });
+        layoutContentStyle.findViewById(R.id.imageAlignRight).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isRight = !isRight;
+                if (isRight) {
+                    if (isCenter && !isLeft) {
+                        isCenter = false;
+                        imgAlignCenter.setColorFilter(Color.parseColor("#A4A4A4"));
+                    } else if (isLeft && !isCenter) {
+                        isLeft = false;
+                        imgAlignLeft.setColorFilter(Color.parseColor("#A4A4A4"));
+                    }
+                    editText.setGravity(Gravity.END);
+                    contentAlign = "END";
+                    imgAlignRight.setColorFilter(Color.parseColor("#000000"));
+
+                } else {
+                    imgAlignRight.setColorFilter(Color.parseColor("#A4A4A4"));
+                }
+            }
+        });
+        Spinner spinnerFontSize = layoutContentStyle.findViewById(R.id.spinnerFontSize);
+        ArrayAdapter<CharSequence> arrayAdapter = ArrayAdapter.createFromResource(this, R.array.font_sizes_content, R.layout.layout_spinner_item);
+        arrayAdapter.setDropDownViewResource(R.layout.layout_dropdown_spinner_item);
+        spinnerFontSize.setAdapter(arrayAdapter);
+        spinnerFontSize.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (adapterView.getSelectedItem().toString().equals("Small")) {
+                    editText.setTextSize(15);
+                    contentTextSize = 15;
+                } else if (adapterView.getSelectedItem().toString().equals("Large")) {
+                    editText.setTextSize(35);
+                    contentTextSize = 35;
+                } else {
+                    editText.setTextSize(25);
+                    contentTextSize = 25;
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        if (selectedNote != null && selectedNote.getContentFontSize() != 0) {
+            if (selectedNote.getContentFontSize() == 15) {
+                spinnerFontSize.setSelection(1);
+            } else if (selectedNote.getContentFontSize() == 35) {
+                spinnerFontSize.setSelection(2);
+            } else {
+                spinnerFontSize.setSelection(0);
+            }
+        }
+
+        Spinner spinnerFontFamily = layoutContentStyle.findViewById(R.id.spinnerFontFamily);
+        ArrayAdapter<CharSequence> arrayFontFamily = ArrayAdapter.createFromResource(this, R.array.font_family, R.layout.layout_spinner_item);
+        arrayFontFamily.setDropDownViewResource(R.layout.layout_dropdown_spinner_item);
+        spinnerFontFamily.setAdapter(arrayFontFamily);
+        spinnerFontFamily.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                Typeface typeface;
+                if (adapterView.getSelectedItem().toString().equals("Harmonia")) {
+                    if (isBoldContent && isItalicContent) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.harmonia_bold_italic);
+                    } else if (isBoldContent) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.harmonia_bold);
+                    } else if (isItalicContent) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.harmonia_italic);
+                    } else {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.harmonia_regular);
+                    }
+                    editText.setTypeface(typeface);
+                    contentFontFamily = "Harmonia";
+                } else if (adapterView.getSelectedItem().toString().equals("OpenSans")) {
+                    if (isBoldContent && isItalicContent) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.opensans_bold_italic);
+                    } else if (isBoldContent) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.opensans_bold);
+                    } else if (isItalicContent) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.opensans_italic);
+                    } else {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.opensans_regular);
+                    }
+                    editText.setTypeface(typeface);
+                    contentFontFamily = "OpenSans";
+                } else if (adapterView.getSelectedItem().toString().equals("Roboto")) {
+                    if (isBoldContent && isItalicContent) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.roboto_bold_italic);
+                    } else if (isBoldContent) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.roboto_bold);
+                    } else if (isItalicContent) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.roboto_italic);
+                    } else {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.roboto_regular);
+                    }
+                    editText.setTypeface(typeface);
+                    contentFontFamily = "Roboto";
+                } else {
+                    if (isBoldContent && isItalicContent) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.ubuntu_bold_italic);
+                    } else if (isBoldContent) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.ubuntu_bold);
+                    } else if (isItalicContent) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.ubuntu_italic);
+                    } else {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.ubuntu_regular);
+                    }
+                    editText.setTypeface(typeface);
+                    contentFontFamily = "Ubuntu";
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+        if (selectedNote != null && !selectedNote.getContentFontFamily().trim().isEmpty()) {
+            switch (selectedNote.getContentFontFamily()) {
+                case "Harmonia":
+                    spinnerFontFamily.setSelection(1);
+                    break;
+                case "OpenSans":
+                    spinnerFontFamily.setSelection(2);
+                    break;
+                case "Roboto":
+                    spinnerFontFamily.setSelection(3);
+                    break;
+                default:
+                    spinnerFontFamily.setSelection(0);
+                    break;
+            }
+        }
+    }
+
     private void initTextStyleLayout(final EditText editText) {
         final LinearLayout layoutTextStyle = findViewById(R.id.layout_text_style);
+        final LinearLayout layoutContentStyle = findViewById(R.id.layout_content_style);
         final LinearLayout layoutMiscellaneous = findViewById(R.id.layout_miscellaneous);
         final BottomSheetBehavior<LinearLayout> bottomSheetBehavior2 = BottomSheetBehavior.from(layoutTextStyle);
         layoutMiscellaneous.setVisibility(View.GONE);
+        layoutContentStyle.setVisibility(View.GONE);
         layoutTextStyle.setVisibility(View.VISIBLE);
         bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_EXPANDED);
         layoutTextStyle.findViewById(R.id.imageBackText).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 layoutTextStyle.setVisibility(View.GONE);
+                layoutContentStyle.setVisibility(View.GONE);
                 layoutMiscellaneous.setVisibility(View.VISIBLE);
                 initMiscellaneous();
+            }
+        });
+        layoutTextStyle.findViewById(R.id.textTitleStyle).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (bottomSheetBehavior2.getState() != BottomSheetBehavior.STATE_EXPANDED) {
+                    bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_EXPANDED);
+                } else {
+                    bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                }
             }
         });
         final ImageView imgColor1 = layoutTextStyle.findViewById(R.id.imgColor1);
@@ -306,12 +985,20 @@ public class CreateNoteActivity extends AppCompatActivity {
         final ImageView imgBold = layoutTextStyle.findViewById(R.id.imageBold);
         final ImageView imgItalic = layoutTextStyle.findViewById(R.id.imageItalic);
         final ImageView imgUnderline = layoutTextStyle.findViewById(R.id.imageUnderline);
+        final ImageView imgAlignLeft = layoutTextStyle.findViewById(R.id.imageAlignLeft);
+        final ImageView imgAlignCenter = layoutTextStyle.findViewById(R.id.imageAlignCenter);
+        final ImageView imgAlignRight = layoutTextStyle.findViewById(R.id.imageAlignRight);
 
+        if (editText.getGravity() == 8388659) {
+            Log.d("START", true + "");
+            imgAlignLeft.setColorFilter(Color.parseColor("#000000"));
+        }
 
         layoutTextStyle.findViewById(R.id.imgColor1).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 editText.setTextColor(Color.WHITE);
+                selectedTextColor = Color.WHITE;
                 imgColor1.setImageResource(R.drawable.ic_done);
                 imgColor2.setImageResource(0);
                 imgColor3.setImageResource(0);
@@ -323,6 +1010,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 editText.setTextColor(Color.parseColor("#F4BF51"));
+                selectedTextColor = Color.parseColor("#F4BF51");
                 imgColor1.setImageResource(0);
                 imgColor2.setImageResource(R.drawable.ic_done);
                 imgColor3.setImageResource(0);
@@ -335,6 +1023,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 editText.setTextColor(Color.parseColor("#DF3C37"));
+                selectedTextColor = Color.parseColor("#DF3C37");
                 imgColor1.setImageResource(0);
                 imgColor2.setImageResource(0);
                 imgColor3.setImageResource(R.drawable.ic_done);
@@ -347,6 +1036,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 editText.setTextColor(Color.parseColor("#2437B8"));
+                selectedTextColor = Color.parseColor("#2437B8");
                 imgColor1.setImageResource(0);
                 imgColor2.setImageResource(0);
                 imgColor3.setImageResource(0);
@@ -359,6 +1049,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 editText.setTextColor(Color.parseColor("#7B7B7B"));
+                selectedTextColor = Color.parseColor("#7B7B7B");
                 imgColor1.setImageResource(0);
                 imgColor2.setImageResource(0);
                 imgColor3.setImageResource(0);
@@ -367,6 +1058,33 @@ public class CreateNoteActivity extends AppCompatActivity {
             }
         });
 
+        if (selectedNote != null && selectedNote.getTitleColor() != 0) {
+            if (selectedNote.getTitleColor() == Color.parseColor("#F4BF51")) {
+                layoutTextStyle.findViewById(R.id.imgColor2).performClick();
+            } else if (selectedNote.getTitleColor() == Color.parseColor("#DF3C37")) {
+                layoutTextStyle.findViewById(R.id.imgColor3).performClick();
+            } else if (selectedNote.getTitleColor() == Color.parseColor("#2437B8")) {
+                layoutTextStyle.findViewById(R.id.imgColor4).performClick();
+            } else if (selectedNote.getTitleColor() == Color.parseColor("#7B7B7B")) {
+                layoutTextStyle.findViewById(R.id.imgColor5).performClick();
+            }
+        }
+
+        if (selectedNote != null) {
+            if (selectedNote.getTitleAlign() == null || selectedNote.getTitleAlign().equals("START")) {
+                imgAlignLeft.setColorFilter(Color.parseColor("#000000"));
+                imgAlignCenter.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgAlignRight.setColorFilter(Color.parseColor("#A4A4A4"));
+            } else if (selectedNote.getTitleAlign().equals("CENTER")) {
+                imgAlignCenter.setColorFilter(Color.parseColor("#000000"));
+                imgAlignLeft.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgAlignRight.setColorFilter(Color.parseColor("#A4A4A4"));
+            } else {
+                imgAlignCenter.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgAlignLeft.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgAlignRight.setColorFilter(Color.parseColor("#000000"));
+            }
+        }
         layoutTextStyle.findViewById(R.id.imageBold).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -377,8 +1095,8 @@ public class CreateNoteActivity extends AppCompatActivity {
                 } else if (isBold) {
                     editText.setTypeface(null, Typeface.BOLD);
                     imgBold.setColorFilter(Color.parseColor("#000000"));
-                } else if(isItalic) {
-                    editText.setTypeface(null,Typeface.ITALIC);
+                } else if (isItalic) {
+                    editText.setTypeface(null, Typeface.ITALIC);
                     imgBold.setColorFilter(Color.parseColor("#A4A4A4"));
                 } else {
                     editText.setTypeface(Typeface.DEFAULT);
@@ -398,8 +1116,8 @@ public class CreateNoteActivity extends AppCompatActivity {
                     editText.setTypeface(null, Typeface.ITALIC);
                     imgItalic.setColorFilter(Color.parseColor("#000000"));
 
-                } else if (isBold){
-                    editText.setTypeface(null,Typeface.BOLD);
+                } else if (isBold) {
+                    editText.setTypeface(null, Typeface.BOLD);
                     imgItalic.setColorFilter(Color.parseColor("#A4A4A4"));
 
                 } else {
@@ -423,19 +1141,118 @@ public class CreateNoteActivity extends AppCompatActivity {
 
             }
         });
-        Spinner spinnerFontSize =  layoutTextStyle.findViewById(R.id.spinnerFontSize);
+        if (selectedNote != null) {
+            if (selectedNote.isTitleBold() && selectedNote.isTitleItalic() && selectedNote.isTitleUnderLined()) {
+                imgBold.setColorFilter(Color.parseColor("#000000"));
+                imgItalic.setColorFilter(Color.parseColor("#000000"));
+                imgUnderline.setColorFilter(Color.parseColor("#000000"));
+            } else if (selectedNote.isTitleBold() && selectedNote.isTitleItalic() && !selectedNote.isTitleUnderLined()) {
+                imgItalic.setColorFilter(Color.parseColor("#000000"));
+                imgBold.setColorFilter(Color.parseColor("#000000"));
+                imgUnderline.setColorFilter(Color.parseColor("#A4A4A4"));
+            } else if (selectedNote.isTitleBold() && !selectedNote.isTitleItalic() && !selectedNote.isTitleUnderLined()) {
+                imgUnderline.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgBold.setColorFilter(Color.parseColor("#000000"));
+                imgItalic.setColorFilter(Color.parseColor("#A4A4A4"));
+            } else if (selectedNote.isTitleBold() && !selectedNote.isTitleItalic() && selectedNote.isTitleUnderLined()) {
+                imgUnderline.setColorFilter(Color.parseColor("#000000"));
+                imgBold.setColorFilter(Color.parseColor("#000000"));
+                imgItalic.setColorFilter(Color.parseColor("#A4A4A4"));
+            } else if (!selectedNote.isTitleBold() && selectedNote.isTitleItalic() && !selectedNote.isTitleUnderLined()) {
+                imgUnderline.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgBold.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgItalic.setColorFilter(Color.parseColor("#000000"));
+            } else if (!selectedNote.isTitleBold() && selectedNote.isTitleItalic() && selectedNote.isTitleUnderLined()) {
+                imgUnderline.setColorFilter(Color.parseColor("#000000"));
+                imgBold.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgItalic.setColorFilter(Color.parseColor("#000000"));
+            } else if (!selectedNote.isTitleBold() && !selectedNote.isTitleItalic() && selectedNote.isTitleUnderLined()) {
+                imgUnderline.setColorFilter(Color.parseColor("#000000"));
+                imgBold.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgItalic.setColorFilter(Color.parseColor("#A4A4A4"));
+            } else {
+                imgUnderline.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgBold.setColorFilter(Color.parseColor("#A4A4A4"));
+                imgItalic.setColorFilter(Color.parseColor("#A4A4A4"));
+            }
+        }
+
+        layoutTextStyle.findViewById(R.id.imageAlignLeft).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isLeft = !isLeft;
+                if (isLeft) {
+                    if (isCenter && !isRight) {
+                        isCenter = false;
+                        imgAlignCenter.setColorFilter(Color.parseColor("#A4A4A4"));
+
+                    } else if (isRight && !isCenter) {
+                        isRight = false;
+                        imgAlignRight.setColorFilter(Color.parseColor("#A4A4A4"));
+                    }
+                    editText.setGravity(Gravity.START);
+                    imgAlignLeft.setColorFilter(Color.parseColor("#000000"));
+                    titleAlgin = "START";
+                }
+            }
+        });
+        layoutTextStyle.findViewById(R.id.imageAlignCenter).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isCenter = !isCenter;
+                if (isCenter) {
+                    if (isLeft && !isRight) {
+                        isLeft = false;
+                        imgAlignLeft.setColorFilter(Color.parseColor("#A4A4A4"));
+                    } else if (isRight && !isLeft) {
+                        isRight = false;
+                        imgAlignRight.setColorFilter(Color.parseColor("#A4A4A4"));
+                    }
+                    editText.setGravity(Gravity.CENTER);
+                    titleAlgin = "CENTER";
+                    imgAlignCenter.setColorFilter(Color.parseColor("#000000"));
+                } else {
+                    imgAlignCenter.setColorFilter(Color.parseColor("#A4A4A4"));
+                }
+            }
+        });
+        layoutTextStyle.findViewById(R.id.imageAlignRight).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isRight = !isRight;
+                if (isRight) {
+                    if (isCenter && !isLeft) {
+                        isCenter = false;
+                        imgAlignCenter.setColorFilter(Color.parseColor("#A4A4A4"));
+                    } else if (isLeft && !isCenter) {
+                        isLeft = false;
+                        imgAlignLeft.setColorFilter(Color.parseColor("#A4A4A4"));
+                    }
+                    editText.setGravity(Gravity.END);
+                    titleAlgin = "END";
+                    imgAlignRight.setColorFilter(Color.parseColor("#000000"));
+
+                } else {
+                    imgAlignRight.setColorFilter(Color.parseColor("#A4A4A4"));
+                }
+            }
+        });
+        Spinner spinnerFontSize = layoutTextStyle.findViewById(R.id.spinnerFontSize);
         ArrayAdapter<CharSequence> arrayAdapter = ArrayAdapter.createFromResource(this, R.array.font_sizes, R.layout.layout_spinner_item);
         arrayAdapter.setDropDownViewResource(R.layout.layout_dropdown_spinner_item);
         spinnerFontSize.setAdapter(arrayAdapter);
         spinnerFontSize.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                if(adapterView.getSelectedItem().toString().equals("Small")) {
+                if (adapterView.getSelectedItem().toString().equals("Small")) {
                     editText.setTextSize(15);
-                } else if (adapterView.getSelectedItem().toString().equals("Large")){
+                    titleTextSize = 15;
+                } else if (adapterView.getSelectedItem().toString().equals("Large")) {
                     editText.setTextSize(35);
+                    titleTextSize = 35;
                 } else {
                     editText.setTextSize(25);
+                    titleTextSize = 25;
                 }
             }
 
@@ -444,7 +1261,99 @@ public class CreateNoteActivity extends AppCompatActivity {
 
             }
         });
+
+        if (selectedNote != null && selectedNote.getTitleFontSize() != 0) {
+            if (selectedNote.getTitleFontSize() == 15) {
+                spinnerFontSize.setSelection(1);
+            } else if (selectedNote.getTitleFontSize() == 35) {
+                spinnerFontSize.setSelection(2);
+            } else {
+                spinnerFontSize.setSelection(0);
+            }
+        }
+
+        Spinner spinnerFontFamily = layoutTextStyle.findViewById(R.id.spinnerFontFamily);
+        ArrayAdapter<CharSequence> arrayFontFamily = ArrayAdapter.createFromResource(this, R.array.font_family, R.layout.layout_spinner_item);
+        arrayFontFamily.setDropDownViewResource(R.layout.layout_dropdown_spinner_item);
+        spinnerFontFamily.setAdapter(arrayFontFamily);
+        spinnerFontFamily.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                Typeface typeface;
+                if (adapterView.getSelectedItem().toString().equals("Harmonia")) {
+                    if (isBold && isItalic) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.harmonia_bold_italic);
+                    } else if (isBold) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.harmonia_bold);
+                    } else if (isItalic) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.harmonia_italic);
+                    } else {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.harmonia_regular);
+                    }
+                    editText.setTypeface(typeface);
+                    titleFontFamily = "Harmonia";
+                } else if (adapterView.getSelectedItem().toString().equals("OpenSans")) {
+                    if (isBold && isItalic) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.opensans_bold_italic);
+                    } else if (isBold) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.opensans_bold);
+                    } else if (isItalic) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.opensans_italic);
+                    } else {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.opensans_regular);
+                    }
+                    editText.setTypeface(typeface);
+                    titleFontFamily = "OpenSans";
+                } else if (adapterView.getSelectedItem().toString().equals("Roboto")) {
+                    if (isBold && isItalic) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.roboto_bold_italic);
+                    } else if (isBold) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.roboto_bold);
+                    } else if (isItalic) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.roboto_italic);
+                    } else {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.roboto_regular);
+                    }
+                    editText.setTypeface(typeface);
+                    titleFontFamily = "Roboto";
+                } else {
+                    if (isBold && isItalic) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.ubuntu_bold_italic);
+                    } else if (isBold) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.ubuntu_bold);
+                    } else if (isItalic) {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.ubuntu_italic);
+                    } else {
+                        typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.ubuntu_regular);
+                    }
+                    editText.setTypeface(typeface);
+                    titleFontFamily = "Ubuntu";
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+        if (selectedNote != null && !selectedNote.getTitleFontFamily().trim().isEmpty()) {
+            switch (selectedNote.getTitleFontFamily()) {
+                case "Harmonia":
+                    spinnerFontFamily.setSelection(1);
+                    break;
+                case "OpenSans":
+                    spinnerFontFamily.setSelection(2);
+                    break;
+                case "Roboto":
+                    spinnerFontFamily.setSelection(3);
+                    break;
+                default:
+                    spinnerFontFamily.setSelection(0);
+                    break;
+            }
+        }
     }
+
 
     private void initMiscellaneous() {
         final LinearLayout layoutMiscellaneous = findViewById(R.id.layout_miscellaneous);

@@ -29,6 +29,134 @@ public class Note implements Serializable {
     private String url;
     @TypeConverters(DateConverter.class)
     Date timeReminder;
+    // title
+    private int titleColor;
+    private String titleFontFamily;
+    private float titleFontSize;
+    private String titleAlign;
+    private boolean isTitleBold;
+    private boolean isTitleItalic;
+    private boolean isTitleUnderLined;
+    //content
+    private int contentColor;
+    private String contentFontFamily;
+    private float contentFontSize;
+    private String contentAlign;
+    private boolean isContentBold;
+    private boolean isContentItalic;
+    private boolean isContentUnderLined;
+
+    public int getTitleColor() {
+        return titleColor;
+    }
+
+    public void setTitleColor(int titleColor) {
+        this.titleColor = titleColor;
+    }
+
+    public String getTitleFontFamily() {
+        return titleFontFamily;
+    }
+
+    public void setTitleFontFamily(String titleFontFamily) {
+        this.titleFontFamily = titleFontFamily;
+    }
+
+    public float getTitleFontSize() {
+        return titleFontSize;
+    }
+
+    public void setTitleFontSize(float titleFontSize) {
+        this.titleFontSize = titleFontSize;
+    }
+
+    public String getTitleAlign() {
+        return titleAlign;
+    }
+
+    public void setTitleAlign(String titleAlign) {
+        this.titleAlign = titleAlign;
+    }
+
+    public boolean isTitleBold() {
+        return isTitleBold;
+    }
+
+    public void setTitleBold(boolean titleBold) {
+        isTitleBold = titleBold;
+    }
+
+    public boolean isTitleItalic() {
+        return isTitleItalic;
+    }
+
+    public void setTitleItalic(boolean titleItalic) {
+        isTitleItalic = titleItalic;
+    }
+
+    public boolean isTitleUnderLined() {
+        return isTitleUnderLined;
+    }
+
+    public void setTitleUnderLined(boolean titleUnderLined) {
+        isTitleUnderLined = titleUnderLined;
+    }
+
+    public int getContentColor() {
+        return contentColor;
+    }
+
+    public void setContentColor(int contentColor) {
+        this.contentColor = contentColor;
+    }
+
+    public String getContentFontFamily() {
+        return contentFontFamily;
+    }
+
+    public void setContentFontFamily(String contentFontFamily) {
+        this.contentFontFamily = contentFontFamily;
+    }
+
+    public float getContentFontSize() {
+        return contentFontSize;
+    }
+
+    public void setContentFontSize(float contentFontSize) {
+        this.contentFontSize = contentFontSize;
+    }
+
+    public String getContentAlign() {
+        return contentAlign;
+    }
+
+    public void setContentAlign(String contentAlign) {
+        this.contentAlign = contentAlign;
+    }
+
+    public boolean isContentBold() {
+        return isContentBold;
+    }
+
+    public void setContentBold(boolean contentBold) {
+        isContentBold = contentBold;
+    }
+
+    public boolean isContentItalic() {
+        return isContentItalic;
+    }
+
+    public void setContentItalic(boolean contentItalic) {
+        isContentItalic = contentItalic;
+    }
+
+    public boolean isContentUnderLined() {
+        return isContentUnderLined;
+    }
+
+    public void setContentUnderLined(boolean contentUnderLined) {
+        isContentUnderLined = contentUnderLined;
+    }
 
     public Date getTimeReminder() {
         return timeReminder;
@@ -108,3 +236,4 @@ public class Note implements Serializable {
         return title + " : " + dateTime;
     }
 }
+
