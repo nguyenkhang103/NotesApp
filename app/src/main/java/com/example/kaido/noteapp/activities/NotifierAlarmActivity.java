@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.annotation.RequiresApi;
@@ -35,9 +36,7 @@ public class NotifierAlarmActivity extends BroadcastReceiver {
         note.setTitle(intent.getStringExtra("note title"));
         note.setTimeReminder(new Date(intent.getStringExtra("time reminder")));
         note.setId(intent.getIntExtra("id",0));
-        Log.w("NOTE",note.getTitle());
-        Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-
+        Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         Intent intent1 = new Intent(context,MainActivity.class);
         intent1.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
@@ -50,7 +49,7 @@ public class NotifierAlarmActivity extends BroadcastReceiver {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
 
         NotificationChannel channel = null;
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             channel = new NotificationChannel("my_channel_01","hello", NotificationManager.IMPORTANCE_HIGH);
         }
 
@@ -62,9 +61,11 @@ public class NotifierAlarmActivity extends BroadcastReceiver {
                 .build();
 
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             notificationManager.createNotificationChannel(channel);
         }
         notificationManager.notify(1, notification);
     }
+
+
 }

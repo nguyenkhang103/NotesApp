@@ -34,7 +34,7 @@
             android:fontFamily="@font/ubuntu_bold"
             android:gravity="center"
             android:includeFontPadding="false"
-            android:text="Text Style"
+            android:text="@string/text_style_note_content"
             android:textAllCaps="true"
             android:textColor="@color/colorWhite"
             android:textSize="@dimen/_13sdp" />

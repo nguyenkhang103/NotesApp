@@ -25,6 +25,7 @@ import com.example.kaido.noteapp.entities.Note;
 import com.example.kaido.noteapp.listeners.NoteListener;
 import com.makeramen.roundedimageview.RoundedImageView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -100,7 +101,10 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
             } else {
                 txtNoteTitle.setTextColor(Color.WHITE);
             }
-
+            if(note.getTitleFontFamily() == null) {
+                typeface = ResourcesCompat.getFont(context, R.font.ubuntu_bold);
+                txtNoteTitle.setTypeface(typeface);
+            }
             switch (note.getTitleFontFamily()) {
                 case "Harmonia":
                     if (note.isTitleBold() && note.isTitleItalic()) {
@@ -201,8 +205,9 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
             if (note.getTimeReminder() == null) {
                 txtTimeReminder.setVisibility(View.GONE);
             } else {
+                SimpleDateFormat sdf3 = new SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm a");
                 Date timeRemind = new Date(note.getTimeReminder().toString().trim());
-                txtTimeReminder.setText(timeRemind.toString());
+                txtTimeReminder.setText(sdf3.format(timeRemind));
             }
         }
 

@@ -154,7 +154,6 @@ public class CreateNoteActivity extends AppCompatActivity {
         isCenterContent = false;
         isRightContent = false;
         contentAlign = "START";
-
         if (getIntent().getBooleanExtra("isViewOrUpdateNote", false)) {
             selectedNote = (Note) getIntent().getSerializableExtra("note");
             setViewOrUpdateNote();
@@ -252,12 +251,18 @@ public class CreateNoteActivity extends AppCompatActivity {
     }
 
     private void setViewOrUpdateNote() {
+
         Typeface typeface, typefaceContent;
         // title
         inputNoteTitle.setText(selectedNote.getTitle());
         if (selectedNote != null && !selectedNote.getTitle().trim().isEmpty()) {
             imageEditText.setVisibility(View.VISIBLE);
-            initTextStyleLayout(inputNoteTitle);
+            imageEditText.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    initTextStyleLayout(inputNoteTitle);
+                }
+            });
         }
 
         if (selectedNote != null && selectedNote.getTitleColor() != 0) {
@@ -267,6 +272,7 @@ public class CreateNoteActivity extends AppCompatActivity {
         }
 
         assert selectedNote != null;
+        Log.d("NOTE",selectedNote.getTitleFontFamily());
         switch (selectedNote.getTitleFontFamily()) {
             case "Harmonia":
                 if (selectedNote.isTitleBold() && selectedNote.isTitleItalic()) {
@@ -357,7 +363,13 @@ public class CreateNoteActivity extends AppCompatActivity {
         inputNoteContent.setText(selectedNote.getNoteContent());
         if (selectedNote != null && !selectedNote.getNoteContent().trim().isEmpty()) {
             imageEditTextContent.setVisibility(View.VISIBLE);
-            initTextStyleLayout(inputNoteContent);
+//            initTextStyleLayout(inputNoteContent);
+            imageEditTextContent.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    initTextStyleContentLayout(inputNoteContent);
+                }
+            });
         }
 
         if (selectedNote != null && selectedNote.getContentColor() != 0) {
@@ -463,7 +475,9 @@ public class CreateNoteActivity extends AppCompatActivity {
         }
         //time reminder
         if (selectedNote.getTimeReminder() != null && !selectedNote.getTimeReminder().toString().trim().isEmpty()) {
-            txtTimeReminder.setText(selectedNote.getTimeReminder().toString());
+            @SuppressLint("SimpleDateFormat") SimpleDateFormat sdf3 = new SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm a");
+            Date timeRemind = new Date(selectedNote.getTimeReminder().toString().trim());
+            txtTimeReminder.setText(sdf3.format(timeRemind));
             layoutTimeReminder.setVisibility(View.VISIBLE);
             findViewById(R.id.imageDeleteTimeReminder).setVisibility(View.VISIBLE);
         }
@@ -484,7 +498,11 @@ public class CreateNoteActivity extends AppCompatActivity {
         note.setImagePath(selectedImagePath);
         //title
         note.setTitleColor(selectedTextColor);
-        note.setTitleFontFamily(titleFontFamily);
+        if(titleFontFamily == null || titleFontFamily.trim().isEmpty()) {
+            note.setTitleFontFamily("Ubuntu");
+        } else {
+            note.setTitleFontFamily(titleFontFamily);
+        }
         note.setTitleFontSize(titleTextSize);
         note.setTitleBold(isBold);
         note.setTitleItalic(isItalic);
@@ -492,7 +510,11 @@ public class CreateNoteActivity extends AppCompatActivity {
         note.setTitleAlign(titleAlgin);
         //content
         note.setContentColor(selectedContentColor);
-        note.setContentFontFamily(contentFontFamily);
+        if(contentFontFamily == null || contentFontFamily.trim().isEmpty()) {
+            note.setContentFontFamily("Ubuntu");
+        } else {
+            note.setContentFontFamily(contentFontFamily);
+        }
         note.setContentFontSize(contentTextSize);
         note.setContentBold(isBoldContent);
         note.setContentItalic(isItalicContent);
@@ -529,6 +551,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             protected Void doInBackground(Void... voids) {
                 NoteDB.getNoteDB(getApplicationContext()).noteDAO().insertNote(note);
+                Log.d("NOTE", note+"");
                 return null;
             }
 
@@ -552,7 +575,7 @@ public class CreateNoteActivity extends AppCompatActivity {
         layoutTextStyle.setVisibility(View.GONE);
         layoutContentStyle.setVisibility(View.VISIBLE);
         bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_EXPANDED);
-        layoutTextStyle.findViewById(R.id.imageBackText).setOnClickListener(new View.OnClickListener() {
+        layoutContentStyle.findViewById(R.id.imageBackText).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 layoutContentStyle.setVisibility(View.GONE);
@@ -562,7 +585,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             }
         });
 
-        layoutTextStyle.findViewById(R.id.textContentStyle).setOnClickListener(new View.OnClickListener() {
+        layoutContentStyle.findViewById(R.id.textContentStyle).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                if(bottomSheetBehavior2.getState() == BottomSheetBehavior.STATE_EXPANDED) {
@@ -875,6 +898,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                 Typeface typeface;
+
                 if (adapterView.getSelectedItem().toString().equals("Harmonia")) {
                     if (isBoldContent && isItalicContent) {
                         typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.harmonia_bold_italic);
@@ -1683,14 +1707,16 @@ public class CreateNoteActivity extends AppCompatActivity {
             });
 
             view.findViewById(R.id.textAddTimeReminder).setOnClickListener(new View.OnClickListener() {
+                @SuppressLint("SimpleDateFormat")
                 @Override
                 public void onClick(View view) {
-                    SimpleDateFormat sdf3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+                    SimpleDateFormat sdf3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.getDefault());
                     Date timeRemind = null;
                     try {
                         timeRemind = sdf3.parse(textDateAndTime.getText().toString().trim());
                         assert timeRemind != null;
-                        txtTimeReminder.setText(timeRemind.toString());
+                        sdf3 = new SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm a");
+                        txtTimeReminder.setText(sdf3.format(timeRemind));
                         Log.w("New time", timeRemind + "");
                         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
                         calendar.setTime(timeRemind);

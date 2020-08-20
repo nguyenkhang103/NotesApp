@@ -40,6 +40,7 @@ import android.widget.Toast;
 
 import com.example.kaido.noteapp.R;
 import com.example.kaido.noteapp.adapter.NoteAdapter;
+import com.example.kaido.noteapp.dao.NoteDAO;
 import com.example.kaido.noteapp.database.NoteDB;
 import com.example.kaido.noteapp.entities.Note;
 import com.example.kaido.noteapp.listeners.NoteListener;
@@ -255,7 +256,7 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
         return imagePath;
     }
 
-    private void getNotes(final int requsetCode, final boolean isNoteDeleted) {
+    private void getNotes(final int requestCode, final boolean isNoteDeleted) {
         @SuppressLint("StaticFieldLeak")
         class GetNotesTask extends AsyncTask<Void, Void, List<Note>> {
 
@@ -267,14 +268,14 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
             @Override
             protected void onPostExecute(List<Note> notes) {
                 super.onPostExecute(notes);
-                if (requsetCode == REQUEST_CODE_GET_NOTES) {
+                if (requestCode == REQUEST_CODE_GET_NOTES) {
                     noteList.addAll(notes);
                     noteAdapter.notifyDataSetChanged();
-                } else if (requsetCode == REQUEST_CODE_ADD_NOTE) {
+                } else if (requestCode == REQUEST_CODE_ADD_NOTE) {
                     noteList.add(0, notes.get(0));
                     noteAdapter.notifyItemInserted(0);
                     recyclerView.smoothScrollToPosition(0);
-                } else if (requsetCode == REQUEST_CODE_UPDATE_NOTE) {
+                } else if (requestCode == REQUEST_CODE_UPDATE_NOTE) {
                     noteList.remove(noteSelectedPosition);
                     if (isNoteDeleted) {
                         noteAdapter.notifyItemRemoved(noteSelectedPosition);
@@ -287,6 +288,7 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
         }
         new GetNotesTask().execute();
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -317,7 +319,7 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
     }
 
     @Override
-    public void onClickedNote(Note note, int positon) {
+    public void onClickedNote(final Note note, int positon) {
         noteSelectedPosition = positon;
         Intent intent = new Intent(getApplicationContext(), CreateNoteActivity.class);
         intent.putExtra("isViewOrUpdateNote", true);
