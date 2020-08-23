@@ -1,6 +1,7 @@
 package com.example.kaido.noteapp.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -77,7 +78,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
 
     public static class NoteHolder extends RecyclerView.ViewHolder {
 
-        TextView txtNoteTitle, txtNoteSubTitle, txtDateTime, txtLinkURL, txtTimeReminder;
+        TextView txtNoteTitle, txtNoteSubTitle, txtDateTime, txtLinkURL;
         LinearLayout layoutNote;
         RoundedImageView imageNote;
 
@@ -86,7 +87,6 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
             txtNoteTitle = itemView.findViewById(R.id.textNoteTitle);
             txtNoteSubTitle = itemView.findViewById(R.id.textNoteSubtitle);
             txtDateTime = itemView.findViewById(R.id.textDateTime);
-            txtTimeReminder = itemView.findViewById(R.id.textTimeReminder);
             layoutNote = itemView.findViewById(R.id.layout_item_note);
             imageNote = itemView.findViewById(R.id.imageImageNote);
             txtLinkURL = itemView.findViewById(R.id.textLinkURL);
@@ -201,13 +201,6 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
                 txtLinkURL.setVisibility(View.GONE);
             } else {
                 txtLinkURL.setText(note.getUrl());
-            }
-            if (note.getTimeReminder() == null) {
-                txtTimeReminder.setVisibility(View.GONE);
-            } else {
-                SimpleDateFormat sdf3 = new SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm a");
-                Date timeRemind = new Date(note.getTimeReminder().toString().trim());
-                txtTimeReminder.setText(sdf3.format(timeRemind));
             }
         }
 

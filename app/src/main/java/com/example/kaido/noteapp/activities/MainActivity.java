@@ -61,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
     private RecyclerView recyclerView;
     private NoteAdapter noteAdapter;
     private List<Note> noteList;
+    private boolean isNotified;
 
     private int noteSelectedPosition = -1;
 
@@ -112,9 +113,9 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
         noteList = new ArrayList<>();
         noteAdapter = new NoteAdapter(noteList, this);
         recyclerView.setAdapter(noteAdapter);
-
+        Intent intent = getIntent();
+        isNotified = intent.getBooleanExtra("isNotified",false);
         getNotes(REQUEST_CODE_GET_NOTES, false);
-
         EditText inputSearchNote = findViewById(R.id.editTextSearch);
         inputSearchNote.addTextChangedListener(new TextWatcher() {
             @Override
@@ -324,6 +325,7 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
         Intent intent = new Intent(getApplicationContext(), CreateNoteActivity.class);
         intent.putExtra("isViewOrUpdateNote", true);
         intent.putExtra("note", note);
+        intent.putExtra("isNotifiedUpdate",isNotified);
         startActivityForResult(intent, REQUEST_CODE_UPDATE_NOTE);
     }
 

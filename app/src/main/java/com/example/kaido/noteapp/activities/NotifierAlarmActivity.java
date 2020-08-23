@@ -39,13 +39,12 @@ public class NotifierAlarmActivity extends BroadcastReceiver {
         Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         Intent intent1 = new Intent(context,MainActivity.class);
         intent1.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent1.putExtra("isNotified",true);
 
         TaskStackBuilder taskStackBuilder = TaskStackBuilder.create(context);
         taskStackBuilder.addParentStack(MainActivity.class);
         taskStackBuilder.addNextIntent(intent1);
-
         PendingIntent intent2 = taskStackBuilder.getPendingIntent(1,PendingIntent.FLAG_UPDATE_CURRENT);
-
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
 
         NotificationChannel channel = null;
@@ -65,7 +64,9 @@ public class NotifierAlarmActivity extends BroadcastReceiver {
             notificationManager.createNotificationChannel(channel);
         }
         notificationManager.notify(1, notification);
+
     }
+
 
 
 }

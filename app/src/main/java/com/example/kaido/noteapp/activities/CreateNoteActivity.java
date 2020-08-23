@@ -33,7 +33,10 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextWatcher;
+import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
 import android.util.Log;
@@ -73,7 +76,7 @@ import java.util.regex.Pattern;
 public class CreateNoteActivity extends AppCompatActivity {
     private EditText inputNoteTitle, inputNoteSubtitle, inputNoteContent;
     private TextView txtDateTime, txtLinkURL, txtTimeReminder;
-    private ImageView imgNote, imageEditText, imageEditTextContent;
+    private ImageView imgNote, imageEditText, imageEditTextContent, imgDone;
     private String selectedColor, titleFontFamily, contentFontFamily;
     private String selectedImagePath;
     private int selectedTextColor, selectedContentColor;
@@ -92,6 +95,8 @@ public class CreateNoteActivity extends AppCompatActivity {
     private Note selectedNote;
     private int titleTextSize, contentTextSize;
     private String titleAlgin, contentAlign;
+    private Date timeReminder;
+    private boolean isNotified;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,7 +115,7 @@ public class CreateNoteActivity extends AppCompatActivity {
         inputNoteSubtitle = findViewById(R.id.inputTextSubNote);
         inputNoteContent = findViewById(R.id.inputNoteContent);
         txtDateTime = findViewById(R.id.textDateTime);
-        ImageView imgDone = findViewById(R.id.imageDone);
+        imgDone = findViewById(R.id.imageDone);
         imgNote = findViewById(R.id.imageNote);
         viewSubtitleIndicator = findViewById(R.id.viewSubTitleIndicator);
         layoutLinkURL = findViewById(R.id.layoutLinkURL);
@@ -137,6 +142,7 @@ public class CreateNoteActivity extends AppCompatActivity {
                 saveNote();
             }
         });
+
         selectedColor = "#333333";
         selectedImagePath = "";
 
@@ -156,6 +162,7 @@ public class CreateNoteActivity extends AppCompatActivity {
         contentAlign = "START";
         if (getIntent().getBooleanExtra("isViewOrUpdateNote", false)) {
             selectedNote = (Note) getIntent().getSerializableExtra("note");
+            isNotified = getIntent().getBooleanExtra("isNotifiedUpdate",false);
             setViewOrUpdateNote();
         }
         findViewById(R.id.imageDeleteImage).setOnClickListener(new View.OnClickListener() {
@@ -163,6 +170,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             public void onClick(View view) {
                 imgNote.setImageBitmap(null);
                 imgNote.setVisibility(View.GONE);
+                imgDone.setVisibility(View.VISIBLE);
                 findViewById(R.id.imageDeleteImage).setVisibility(View.GONE);
                 selectedImagePath = "";
             }
@@ -172,6 +180,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 txtLinkURL.setText(null);
+                imgDone.setVisibility(View.VISIBLE);
                 layoutLinkURL.setVisibility(View.GONE);
             }
         });
@@ -179,6 +188,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 txtTimeReminder.setText(null);
+                imgDone.setVisibility(View.VISIBLE);
                 layoutTimeReminder.setVisibility(View.GONE);
             }
         });
@@ -254,6 +264,7 @@ public class CreateNoteActivity extends AppCompatActivity {
 
         Typeface typeface, typefaceContent;
         // title
+        imgDone.setVisibility(View.GONE);
         inputNoteTitle.setText(selectedNote.getTitle());
         if (selectedNote != null && !selectedNote.getTitle().trim().isEmpty()) {
             imageEditText.setVisibility(View.VISIBLE);
@@ -261,9 +272,65 @@ public class CreateNoteActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     initTextStyleLayout(inputNoteTitle);
+                    imgDone.setVisibility(View.VISIBLE);
                 }
             });
+
         }
+        inputNoteTitle.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if(!editable.toString().equals(selectedNote.getTitle())) {
+                    imgDone.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        inputNoteContent.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if(!editable.toString().equals(selectedNote.getNoteContent())) {
+                    imgDone.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        inputNoteSubtitle.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if(!editable.toString().equals(selectedNote.getSubtitle())) {
+                    imgDone.setVisibility(View.VISIBLE);
+                }
+            }
+        });
 
         if (selectedNote != null && selectedNote.getTitleColor() != 0) {
             inputNoteTitle.setTextColor(selectedNote.getTitleColor());
@@ -272,7 +339,6 @@ public class CreateNoteActivity extends AppCompatActivity {
         }
 
         assert selectedNote != null;
-        Log.d("NOTE",selectedNote.getTitleFontFamily());
         switch (selectedNote.getTitleFontFamily()) {
             case "Harmonia":
                 if (selectedNote.isTitleBold() && selectedNote.isTitleItalic()) {
@@ -363,7 +429,6 @@ public class CreateNoteActivity extends AppCompatActivity {
         inputNoteContent.setText(selectedNote.getNoteContent());
         if (selectedNote != null && !selectedNote.getNoteContent().trim().isEmpty()) {
             imageEditTextContent.setVisibility(View.VISIBLE);
-//            initTextStyleLayout(inputNoteContent);
             imageEditTextContent.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -437,17 +502,20 @@ public class CreateNoteActivity extends AppCompatActivity {
         } else {
             inputNoteContent.setTextSize(25);
         }
-        SpannableString contentNote = new SpannableString(selectedNote.getNoteContent());
-
-
-        if (selectedNote.isContentBold() && selectedNote.isContentItalic()) {
-            contentNote.setSpan(new StyleSpan(Typeface.BOLD_ITALIC), 0, content.length(), 0);
-        } else if (selectedNote.isContentBold() && !selectedNote.isContentItalic()) {
-            contentNote.setSpan(new StyleSpan(Typeface.BOLD), 0, content.length(), 0);
-        } else {
-            contentNote.setSpan(new StyleSpan(Typeface.ITALIC), 0, content.length(), 0);
+        if (!selectedNote.getNoteContent().trim().isEmpty()) {
+            SpannableString contentNote = new SpannableString(selectedNote.getNoteContent());
+            if (selectedNote.isContentBold() && selectedNote.isContentItalic()) {
+                contentNote.setSpan(new StyleSpan(Typeface.BOLD_ITALIC), 0, contentNote.length(), 0);
+            } else if (selectedNote.isContentBold() && !selectedNote.isContentItalic()) {
+                contentNote.setSpan(new StyleSpan(Typeface.BOLD), 0, contentNote.length(), 0);
+            } else if (!selectedNote.isContentBold() && selectedNote.isContentItalic()) {
+                contentNote.setSpan(new StyleSpan(Typeface.ITALIC), 0, contentNote.length(), 0);
+            } else if (!selectedNote.isContentBold() && !selectedNote.isContentItalic()) {
+                contentNote.setSpan(new StyleSpan(Typeface.NORMAL), 0, contentNote.length(),0);
+            }
+            inputNoteContent.setText(contentNote);
         }
-        inputNoteContent.setText(content);
+
 
         if (selectedNote.isContentUnderLined()) {
             inputNoteContent.setPaintFlags(inputNoteContent.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
@@ -477,9 +545,26 @@ public class CreateNoteActivity extends AppCompatActivity {
         if (selectedNote.getTimeReminder() != null && !selectedNote.getTimeReminder().toString().trim().isEmpty()) {
             @SuppressLint("SimpleDateFormat") SimpleDateFormat sdf3 = new SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm a");
             Date timeRemind = new Date(selectedNote.getTimeReminder().toString().trim());
-            txtTimeReminder.setText(sdf3.format(timeRemind));
+//            txtTimeReminder.setText(sdf3.format(timeRemind));
             layoutTimeReminder.setVisibility(View.VISIBLE);
-            findViewById(R.id.imageDeleteTimeReminder).setVisibility(View.VISIBLE);
+            String tmp = sdf3.format(timeRemind);
+            Log.d("isNotifiedUpdate1",isNotified+"");
+            if(isNotified) {
+                Log.d("text",txtTimeReminder.getText().toString());
+                SpannableStringBuilder ssBuilder = new SpannableStringBuilder(tmp);
+                StrikethroughSpan strikethroughSpan = new StrikethroughSpan();
+                ssBuilder.setSpan(
+                        strikethroughSpan,
+                        0,
+                        tmp.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                );
+                txtTimeReminder.setText(ssBuilder);
+                findViewById(R.id.imageDeleteTimeReminder).setVisibility(View.GONE);
+            } else {
+                txtTimeReminder.setText(tmp);
+                findViewById(R.id.imageDeleteTimeReminder).setVisibility(View.VISIBLE);
+            }
         }
     }
 
@@ -498,7 +583,7 @@ public class CreateNoteActivity extends AppCompatActivity {
         note.setImagePath(selectedImagePath);
         //title
         note.setTitleColor(selectedTextColor);
-        if(titleFontFamily == null || titleFontFamily.trim().isEmpty()) {
+        if (titleFontFamily == null || titleFontFamily.trim().isEmpty()) {
             note.setTitleFontFamily("Ubuntu");
         } else {
             note.setTitleFontFamily(titleFontFamily);
@@ -510,7 +595,7 @@ public class CreateNoteActivity extends AppCompatActivity {
         note.setTitleAlign(titleAlgin);
         //content
         note.setContentColor(selectedContentColor);
-        if(contentFontFamily == null || contentFontFamily.trim().isEmpty()) {
+        if (contentFontFamily == null || contentFontFamily.trim().isEmpty()) {
             note.setContentFontFamily("Ubuntu");
         } else {
             note.setContentFontFamily(contentFontFamily);
@@ -526,7 +611,8 @@ public class CreateNoteActivity extends AppCompatActivity {
             note.setUrl(txtLinkURL.getText().toString());
         }
         if (layoutTimeReminder.getVisibility() == View.VISIBLE) {
-            Date timeRemind = new Date(txtTimeReminder.getText().toString().trim());
+            Date timeRemind = new Date(timeReminder.toString());
+            Log.d("TIME REMINDER", timeRemind.toString());
             note.setTimeReminder(timeRemind);
             Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
             calendar.setTime(timeRemind);
@@ -535,10 +621,10 @@ public class CreateNoteActivity extends AppCompatActivity {
             intent.putExtra("note title", note.getTitle());
             intent.putExtra("time reminder", note.getTimeReminder().toString());
             intent.putExtra("id", note.getId());
-
             PendingIntent pendingIntent = PendingIntent.getBroadcast(CreateNoteActivity.this, note.getId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
             AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
+            layoutTimeReminder.setVisibility(View.GONE);
         }
 
         if (selectedNote != null) {
@@ -551,7 +637,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             protected Void doInBackground(Void... voids) {
                 NoteDB.getNoteDB(getApplicationContext()).noteDAO().insertNote(note);
-                Log.d("NOTE", note+"");
+                Log.d("NOTE", note + "");
                 return null;
             }
 
@@ -588,11 +674,11 @@ public class CreateNoteActivity extends AppCompatActivity {
         layoutContentStyle.findViewById(R.id.textContentStyle).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-               if(bottomSheetBehavior2.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-                   bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_COLLAPSED);
-               } else {
-                   bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_EXPANDED);
-               }
+                if (bottomSheetBehavior2.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+                    bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                } else {
+                    bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_EXPANDED);
+                }
             }
         });
         final ImageView imgColor1 = layoutContentStyle.findViewById(R.id.imgColor1);
@@ -1710,10 +1796,11 @@ public class CreateNoteActivity extends AppCompatActivity {
                 @SuppressLint("SimpleDateFormat")
                 @Override
                 public void onClick(View view) {
-                    SimpleDateFormat sdf3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.getDefault());
+                    SimpleDateFormat sdf3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
                     Date timeRemind = null;
                     try {
-                        timeRemind = sdf3.parse(textDateAndTime.getText().toString().trim());
+                        timeRemind = sdf3.parse(textDateAndTime.getText().toString());
+                        timeReminder = timeRemind;
                         assert timeRemind != null;
                         sdf3 = new SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm a");
                         txtTimeReminder.setText(sdf3.format(timeRemind));
