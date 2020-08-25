@@ -97,6 +97,7 @@ public class CreateNoteActivity extends AppCompatActivity {
     private String titleAlgin, contentAlign;
     private Date timeReminder;
     private boolean isNotified;
+    private boolean isNotifyCreated;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -545,12 +546,9 @@ public class CreateNoteActivity extends AppCompatActivity {
         if (selectedNote.getTimeReminder() != null && !selectedNote.getTimeReminder().toString().trim().isEmpty()) {
             @SuppressLint("SimpleDateFormat") SimpleDateFormat sdf3 = new SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm a");
             Date timeRemind = new Date(selectedNote.getTimeReminder().toString().trim());
-//            txtTimeReminder.setText(sdf3.format(timeRemind));
             layoutTimeReminder.setVisibility(View.VISIBLE);
             String tmp = sdf3.format(timeRemind);
-            Log.d("isNotifiedUpdate1",isNotified+"");
-            if(isNotified) {
-                Log.d("text",txtTimeReminder.getText().toString());
+            if(Calendar.getInstance().getTime().after(timeRemind)) {
                 SpannableStringBuilder ssBuilder = new SpannableStringBuilder(tmp);
                 StrikethroughSpan strikethroughSpan = new StrikethroughSpan();
                 ssBuilder.setSpan(
@@ -560,11 +558,10 @@ public class CreateNoteActivity extends AppCompatActivity {
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
                 );
                 txtTimeReminder.setText(ssBuilder);
-                findViewById(R.id.imageDeleteTimeReminder).setVisibility(View.GONE);
             } else {
                 txtTimeReminder.setText(tmp);
-                findViewById(R.id.imageDeleteTimeReminder).setVisibility(View.VISIBLE);
             }
+            findViewById(R.id.imageDeleteTimeReminder).setVisibility(View.VISIBLE);
         }
     }
 
@@ -1570,6 +1567,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                imgDone.setVisibility(View.VISIBLE);
                 if (ContextCompat.checkSelfPermission(
                         getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE
                 ) != PackageManager.PERMISSION_GRANTED) {
@@ -1585,6 +1583,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                imgDone.setVisibility(View.VISIBLE);
                 showAddURLDialog();
             }
         });
@@ -1593,6 +1592,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                imgDone.setVisibility(View.VISIBLE);
                 showAddTimeReminderDialog();
             }
         });
@@ -1603,6 +1603,7 @@ public class CreateNoteActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    imgDone.setVisibility(View.VISIBLE);
                     showDeleteNoteDialog();
                 }
             });
@@ -1808,6 +1809,7 @@ public class CreateNoteActivity extends AppCompatActivity {
                         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
                         calendar.setTime(timeRemind);
                         calendar.set(Calendar.SECOND, 0);
+                        isNotifyCreated = false;
                         findViewById(R.id.layoutTimeReminder).setVisibility(View.VISIBLE);
                         alertDialogTimeReminder.dismiss();
 

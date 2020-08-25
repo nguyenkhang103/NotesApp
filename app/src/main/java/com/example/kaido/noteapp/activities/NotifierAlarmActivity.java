@@ -37,9 +37,9 @@ public class NotifierAlarmActivity extends BroadcastReceiver {
         note.setTimeReminder(new Date(intent.getStringExtra("time reminder")));
         note.setId(intent.getIntExtra("id",0));
         Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         Intent intent1 = new Intent(context,MainActivity.class);
         intent1.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        intent1.putExtra("isNotified",true);
 
         TaskStackBuilder taskStackBuilder = TaskStackBuilder.create(context);
         taskStackBuilder.addParentStack(MainActivity.class);
@@ -59,7 +59,7 @@ public class NotifierAlarmActivity extends BroadcastReceiver {
                 .setChannelId("my_channel_01")
                 .build();
 
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             notificationManager.createNotificationChannel(channel);
         }
