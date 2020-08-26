@@ -47,7 +47,7 @@
                 android:contentDescription="@string/app_name"
                 android:padding="@dimen/_10sdp"
                 android:src="@drawable/ic_done"
-                android:tint="@color/colorWhite" />
+                app:tint="@color/colorWhite" />
         </FrameLayout>
 
         <FrameLayout
@@ -67,7 +67,7 @@
                 android:layout_height="@dimen/_35sdp"
                 android:contentDescription="@string/app_name"
                 android:padding="@dimen/_10sdp"
-                android:tint="@color/colorWhite" />
+                app:tint="@color/colorWhite" />
         </FrameLayout>
 
         <FrameLayout
@@ -87,7 +87,7 @@
                 android:layout_height="@dimen/_35sdp"
                 android:contentDescription="@string/app_name"
                 android:padding="@dimen/_10sdp"
-                android:tint="@color/colorWhite" />
+                app:tint="@color/colorWhite" />
         </FrameLayout>
 
         <FrameLayout
@@ -107,7 +107,7 @@
                 android:layout_height="@dimen/_35sdp"
                 android:contentDescription="@string/app_name"
                 android:padding="@dimen/_10sdp"
-                android:tint="@color/colorWhite" />
+                app:tint="@color/colorWhite" />
         </FrameLayout>
 
         <FrameLayout
@@ -127,7 +127,7 @@
                 android:layout_height="@dimen/_35sdp"
                 android:contentDescription="@string/app_name"
                 android:padding="@dimen/_10sdp"
-                android:tint="@color/colorWhite" />
+                app:tint="@color/colorWhite" />
         </FrameLayout>
 
         <TextView
@@ -158,7 +158,7 @@
             android:layout_height="@dimen/_24sdp"
             android:contentDescription="@string/app_name"
             android:src="@drawable/ic_image"
-            android:tint="@color/colorIcons" />
+            app:tint="@color/colorIcons" />
 
         <TextView
             android:layout_width="match_parent"
@@ -186,7 +186,7 @@
             android:layout_height="@dimen/_24sdp"
             android:contentDescription="@string/app_name"
             android:src="@drawable/ic_web"
-            android:tint="@color/colorIcons" />
+            app:tint="@color/colorIcons" />
 
         <TextView
             android:layout_width="match_parent"
@@ -214,7 +214,7 @@
             android:layout_height="@dimen/_24sdp"
             android:contentDescription="@string/app_name"
             android:src="@drawable/ic_alarm"
-            android:tint="@color/colorIcons" />
+            app:tint="@color/colorIcons" />
 
         <TextView
             android:layout_width="match_parent"
@@ -223,6 +223,34 @@
             android:fontFamily="@font/ubuntu_medium"
             android:includeFontPadding="false"
             android:text="@string/add_time_reminder"
+            android:textColor="@color/colorWhite"
+            android:textSize="@dimen/_13sdp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutAddVoiceRecorder"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/_35sdp"
+        android:layout_margin="@dimen/_10sdp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        tools:ignore="UseCompoundDrawables">
+
+        <ImageView
+            android:layout_width="@dimen/_24sdp"
+            android:layout_height="@dimen/_24sdp"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/ic_mic"
+            app:tint="@color/colorIcons" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/_12sdp"
+            android:fontFamily="@font/ubuntu_medium"
+            android:includeFontPadding="false"
+            android:text="@string/add_voice_recorder"
             android:textColor="@color/colorWhite"
             android:textSize="@dimen/_13sdp" />
 
@@ -242,8 +270,8 @@
             android:layout_width="@dimen/_24sdp"
             android:layout_height="@dimen/_24sdp"
             android:src="@drawable/ic_delete"
-            android:tint="@color/colorDelete"
-            android:contentDescription="@string/app_name"/>
+            android:contentDescription="@string/app_name"
+            app:tint="@color/colorDelete" />
 
         <TextView
             android:layout_width="match_parent"
@@ -256,5 +284,7 @@
             android:includeFontPadding="false"/>
 
     </LinearLayout>
+
+
 
 </LinearLayout>

@@ -89,7 +89,7 @@ public class CreateNoteActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_STORAGE_PERMISSION = 1;
     private static final int REQUEST_CODE_SELECT_IMAGE = 2;
 
-    private AlertDialog alertDialog, alertDialogTimeReminder;
+    private AlertDialog alertDialog, alertDialogTimeReminder, alertDialogVoiceRecorder;
     private AlertDialog alertDialogDeleteNote;
 
     private Note selectedNote;
@@ -1597,6 +1597,15 @@ public class CreateNoteActivity extends AppCompatActivity {
             }
         });
 
+        layoutMiscellaneous.findViewById(R.id.layoutAddVoiceRecorder).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                imgDone.setVisibility(View.VISIBLE);
+                showAddVoiceRecorderDialog();
+            }
+        });
+
         if (selectedNote != null) {
             layoutMiscellaneous.findViewById(R.id.layoutDeleteNote).setVisibility(View.VISIBLE);
             layoutMiscellaneous.findViewById(R.id.layoutDeleteNote).setOnClickListener(new View.OnClickListener() {
@@ -1828,4 +1837,79 @@ public class CreateNoteActivity extends AppCompatActivity {
         alertDialogTimeReminder.show();
     }
 
+
+    private void showAddVoiceRecorderDialog() {
+        if (alertDialogVoiceRecorder == null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            View view = LayoutInflater.from(this).inflate(R.layout.layout_add_voice_recorder, (ViewGroup) findViewById(R.id.layoutAddVoiceRecorderDialog));
+            builder.setView(view);
+            alertDialogVoiceRecorder = builder.create();
+
+            if (alertDialogVoiceRecorder.getWindow() != null) {
+                alertDialogVoiceRecorder.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+            }
+//            final TextView textDateAndTime = view.findViewById(R.id.dateAndTime);
+//            final Calendar newCalender = Calendar.getInstance();
+//            view.findViewById(R.id.selectDate).setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View view) {
+//                    DatePickerDialog datePickerDialog = new DatePickerDialog(CreateNoteActivity.this, new DatePickerDialog.OnDateSetListener() {
+//                        @Override
+//                        public void onDateSet(DatePicker datePicker, final int year, final int month, final int day) {
+//                            final Calendar newDate = Calendar.getInstance();
+//                            Calendar newTime = Calendar.getInstance();
+//                            TimePickerDialog timePickerDialog = new TimePickerDialog(CreateNoteActivity.this, new TimePickerDialog.OnTimeSetListener() {
+//                                @Override
+//                                public void onTimeSet(TimePicker timePicker, int hour, int minute) {
+//                                    newDate.set(year, month, day, hour, minute, 0);
+//                                    Calendar currentDateTime = Calendar.getInstance();
+//                                    if (newDate.getTimeInMillis() - currentDateTime.getTimeInMillis() > 0) {
+//                                        textDateAndTime.setText(newDate.getTime().toString());
+//                                    } else
+//                                        Toast.makeText(CreateNoteActivity.this, "Invalid time", Toast.LENGTH_SHORT).show();
+//                                }
+//                            }, newTime.get(Calendar.HOUR_OF_DAY), newTime.get(Calendar.MINUTE), true);
+//                            timePickerDialog.show();
+//                        }
+//                    }, newCalender.get(Calendar.YEAR), newCalender.get(Calendar.MONTH), newCalender.get(Calendar.DAY_OF_MONTH));
+//
+//                    datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
+//                    datePickerDialog.show();
+//                }
+//            });
+//
+//            view.findViewById(R.id.textAddTimeReminder).setOnClickListener(new View.OnClickListener() {
+//                @SuppressLint("SimpleDateFormat")
+//                @Override
+//                public void onClick(View view) {
+//                    SimpleDateFormat sdf3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+//                    Date timeRemind = null;
+//                    try {
+//                        timeRemind = sdf3.parse(textDateAndTime.getText().toString());
+//                        timeReminder = timeRemind;
+//                        assert timeRemind != null;
+//                        sdf3 = new SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm a");
+//                        txtTimeReminder.setText(sdf3.format(timeRemind));
+//                        Log.w("New time", timeRemind + "");
+//                        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+//                        calendar.setTime(timeRemind);
+//                        calendar.set(Calendar.SECOND, 0);
+//                        isNotifyCreated = false;
+//                        findViewById(R.id.layoutTimeReminder).setVisibility(View.VISIBLE);
+//                        alertDialogTimeReminder.dismiss();
+//
+//                    } catch (ParseException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            });
+//            view.findViewById(R.id.textCancel).setOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View view) {
+//                    alertDialogTimeReminder.dismiss();
+//                }
+//            });
+        }
+        alertDialogVoiceRecorder.show();
+    }
 }

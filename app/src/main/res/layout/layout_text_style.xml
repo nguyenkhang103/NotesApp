@@ -24,7 +24,7 @@
             android:layout_height="@dimen/_24sdp"
             android:contentDescription="@string/app_name"
             android:src="@drawable/ic_back"
-            android:tint="@color/colorIcons" />
+            app:tint="@color/colorIcons" />
 
         <TextView
             android:id="@+id/textTitleStyle"
@@ -68,7 +68,7 @@
                 android:contentDescription="@string/app_name"
                 android:padding="@dimen/_10sdp"
                 android:src="@drawable/ic_done"
-                android:tint="@color/colorDefaultNote" />
+                app:tint="@color/colorDefaultNote" />
         </FrameLayout>
 
         <FrameLayout
@@ -88,7 +88,7 @@
                 android:layout_height="@dimen/_35sdp"
                 android:contentDescription="@string/app_name"
                 android:padding="@dimen/_10sdp"
-                android:tint="@color/colorWhite" />
+                app:tint="@color/colorWhite" />
         </FrameLayout>
 
         <FrameLayout
@@ -108,7 +108,7 @@
                 android:layout_height="@dimen/_35sdp"
                 android:contentDescription="@string/app_name"
                 android:padding="@dimen/_10sdp"
-                android:tint="@color/colorWhite" />
+                app:tint="@color/colorWhite" />
         </FrameLayout>
 
         <FrameLayout
@@ -128,7 +128,7 @@
                 android:layout_height="@dimen/_35sdp"
                 android:contentDescription="@string/app_name"
                 android:padding="@dimen/_10sdp"
-                android:tint="@color/colorWhite" />
+                app:tint="@color/colorWhite" />
         </FrameLayout>
 
         <FrameLayout
@@ -148,7 +148,7 @@
                 android:layout_height="@dimen/_35sdp"
                 android:contentDescription="@string/app_name"
                 android:padding="@dimen/_10sdp"
-                android:tint="@color/colorWhite" />
+                app:tint="@color/colorWhite" />
         </FrameLayout>
 
         <TextView
@@ -206,7 +206,7 @@
             android:layout_marginEnd="@dimen/_15sdp"
             android:contentDescription="@string/app_name"
             android:src="@drawable/ic_bold"
-            android:tint="@color/colorIcons" />
+            app:tint="@color/colorIcons" />
 
         <ImageView
             android:id="@+id/imageItalic"
@@ -215,7 +215,7 @@
             android:layout_marginEnd="@dimen/_15sdp"
             android:contentDescription="@string/app_name"
             android:src="@drawable/ic_italic"
-            android:tint="@color/colorIcons" />
+            app:tint="@color/colorIcons" />
 
         <ImageView
             android:id="@+id/imageUnderline"
@@ -224,7 +224,7 @@
             android:layout_marginEnd="@dimen/_15sdp"
             android:contentDescription="@string/app_name"
             android:src="@drawable/ic_underline"
-            android:tint="@color/colorIcons" />
+            app:tint="@color/colorIcons" />
 
         <ImageView
             android:id="@+id/imageAlignLeft"
@@ -234,7 +234,7 @@
             android:layout_marginEnd="@dimen/_15sdp"
             android:contentDescription="@string/app_name"
             android:src="@drawable/ic_align_left"
-            android:tint="@color/colorIcons" />
+            app:tint="@color/colorIcons" />
 
         <ImageView
             android:id="@+id/imageAlignCenter"
@@ -243,7 +243,7 @@
             android:layout_marginEnd="@dimen/_15sdp"
             android:contentDescription="@string/app_name"
             android:src="@drawable/ic_align_center"
-            android:tint="@color/colorIcons" />
+            app:tint="@color/colorIcons" />
 
         <ImageView
             android:id="@+id/imageAlignRight"
@@ -252,7 +252,7 @@
             android:layout_marginEnd="@dimen/_15sdp"
             android:contentDescription="@string/app_name"
             android:src="@drawable/ic_align_right"
-            android:tint="@color/colorIcons" />
+            app:tint="@color/colorIcons" />
 
     </LinearLayout>
 

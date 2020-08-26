@@ -20,4 +20,5 @@
     <string name="text_color">Text Color</string>
     <string name="text_style_note_content">Text Style Note Content</string>
     <string name="text_style_note_title">Text Style Note Title</string>
+    <string name="add_voice_recorder">Add Voice Recorder</string>
 </resources>

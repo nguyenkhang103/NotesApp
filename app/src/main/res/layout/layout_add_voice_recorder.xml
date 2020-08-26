@@ -5,16 +5,16 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/layoutAddURLDialog"
+    android:id="@+id/layoutAddVoiceRecorderDialog"
     android:layout_gravity="center"
     android:layout_margin="@dimen/_10sdp"
     android:background="@drawable/background_dialog">
-    
+
     <ImageView
-        android:id="@+id/imageWebLink"
+        android:id="@+id/imageMic"
         android:layout_width="@dimen/_24sdp"
         android:layout_height="@dimen/_24sdp"
-        android:src="@drawable/ic_web"
+        android:src="@drawable/ic_mic"
         android:layout_marginStart="@dimen/_8sdp"
         android:layout_marginTop="@dimen/_10sdp"
         android:layout_marginEnd="@dimen/_8sdp"
@@ -26,52 +26,64 @@
     <TextView
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="@string/add_link_url"
+        android:text="@string/add_voice_recorder"
         android:textColor="@color/colorWhite"
         android:textSize="@dimen/_13sdp"
         android:fontFamily="@font/ubuntu_medium"
         android:layout_marginStart="@dimen/_8sdp"
         android:layout_marginEnd="@dimen/_8sdp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="@id/imageWebLink"
-        app:layout_constraintStart_toEndOf="@id/imageWebLink"
-        app:layout_constraintTop_toTopOf="@id/imageWebLink"
+        app:layout_constraintBottom_toBottomOf="@id/imageMic"
+        app:layout_constraintStart_toEndOf="@id/imageMic"
+        app:layout_constraintTop_toTopOf="@id/imageMic"
         android:includeFontPadding="false"/>
-    
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/inputLinkURL"
-        android:hint="@string/enter_url"
-        android:textColor="@color/colorWhite"
-        android:textSize="@dimen/_12sdp"
-        android:textColorHint="@color/colorTextHint"
-        android:layout_marginStart="@dimen/_8sdp"
-        android:layout_marginEnd="@dimen/_8sdp"
-        android:layout_marginTop="@dimen/_8sdp"
-        android:importantForAutofill="no"
-        android:includeFontPadding="false"
-        android:gravity="center_vertical"
-        android:background="@null"
-        android:fontFamily="@font/ubuntu_regular"
-        app:layout_constraintTop_toBottomOf="@id/imageWebLink"
-        android:inputType="textUri"
-        android:paddingStart="@dimen/_8sdp"
-        android:paddingEnd="@dimen/_8sdp"
-        android:imeOptions="actionDone"/>
-    
+
+   <Chronometer
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:textSize="@dimen/_18sdp"
+       android:fontFamily="@font/harmonia_bold"
+       android:textColor="@color/colorWhite"
+       android:layout_marginTop="@dimen/_10sdp"
+       app:layout_constraintStart_toStartOf="parent"
+       app:layout_constraintEnd_toEndOf="parent"
+       app:layout_constraintTop_toBottomOf="@id/imageMic"
+       android:id="@+id/cmRecorder"/>
+
+    <ImageView
+        android:layout_width="@dimen/_50sdp"
+        android:layout_height="@dimen/_50sdp"
+        android:background="@drawable/background_done_button"
+        android:src="@drawable/ic_mic"
+        app:tint="@color/colorIcons"
+        app:layout_constraintTop_toBottomOf="@id/cmRecorder"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="@dimen/_10sdp"
+        android:id="@+id/imageRecordVoice"/>
+    <ImageView
+        android:layout_width="@dimen/_35sdp"
+        android:layout_height="@dimen/_35sdp"
+        android:src="@drawable/ic_list"
+        app:tint="@color/colorIcons"
+        app:layout_constraintTop_toTopOf="@id/imageRecordVoice"
+        app:layout_constraintStart_toEndOf="@id/imageRecordVoice"
+        app:layout_constraintBottom_toBottomOf="@id/imageRecordVoice"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:id="@+id/imageListRecordButton"/>
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/textAddURL"
+        android:id="@+id/textAddVoiceRecorder"
         android:text="@string/add"
         android:textColor="@color/colorAccent"
         android:textSize="@dimen/_13sdp"
         android:fontFamily="@font/ubuntu_medium"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@id/inputLinkURL"
-        app:layout_constraintTop_toBottomOf="@id/inputLinkURL"
-        android:layout_marginTop="@dimen/_8sdp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/imageListRecordButton"
+        android:layout_marginTop="@dimen/_15sdp"
         android:layout_marginEnd="@dimen/_8sdp"
         android:layout_marginBottom="@dimen/_8sdp"
         android:padding="@dimen/_8sdp"
@@ -86,12 +98,14 @@
         android:text="@string/cancel"
         android:fontFamily="@font/ubuntu_medium"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/textAddURL"
-        app:layout_constraintTop_toBottomOf="@id/inputLinkURL"
+        app:layout_constraintEnd_toStartOf="@id/textAddVoiceRecorder"
+        app:layout_constraintTop_toBottomOf="@id/imageListRecordButton"
         android:layout_marginEnd="@dimen/_8sdp"
+        android:layout_marginTop="@dimen/_8sdp"
         android:layout_marginStart="@dimen/_8sdp"
         android:padding="@dimen/_8sdp"
         android:includeFontPadding="false"/>
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

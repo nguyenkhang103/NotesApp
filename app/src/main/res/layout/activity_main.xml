@@ -40,7 +40,7 @@
             android:layout_height="@dimen/_20sdp"
             android:contentDescription="@string/app_name"
             android:src="@drawable/ic_search"
-            android:tint="@color/colorSearchIcon" />
+            app:tint="@color/colorSearchIcon" />
 
         <EditText
             android:id="@+id/editTextSearch"
@@ -88,22 +88,25 @@
             android:layout_width="@dimen/_24sdp"
             android:layout_height="@dimen/_24sdp"
             android:src="@drawable/ic_alarm"
-            android:tint="@color/colorIcons"
-            android:id="@+id/imageTimeReminder"/>
+            android:id="@+id/imageTimeReminder"
+            app:tint="@color/colorIcons"
+            android:contentDescription="@string/app_name" />
         <ImageView
             android:layout_width="@dimen/_24sdp"
             android:layout_height="@dimen/_24sdp"
             android:src="@drawable/ic_image"
-            android:tint="@color/colorIcons"
             android:layout_marginStart="@dimen/_15sdp"
-            android:id="@+id/imageImageNote"/>
+            android:id="@+id/imageImageNote"
+            app:tint="@color/colorIcons"
+            android:contentDescription="@string/app_name"/>
         <ImageView
             android:layout_width="@dimen/_24sdp"
             android:layout_height="@dimen/_24sdp"
             android:src="@drawable/ic_web"
-            android:tint="@color/colorIcons"
             android:layout_marginStart="@dimen/_15sdp"
-            android:id="@+id/imageWebLinkNote"/>
+            android:id="@+id/imageWebLinkNote"
+            app:tint="@color/colorIcons"
+            android:contentDescription="@string/app_name"/>
     </LinearLayout>
 
     <ImageView
@@ -117,8 +120,8 @@
         app:layout_constraintTop_toTopOf="@id/layoutBottomBar"
         android:layout_marginEnd="@dimen/_30sdp"
         android:padding="@dimen/_5sdp"
-        android:tint="@color/colorPrimary"
-        />
+        app:tint="@color/colorPrimary"
+        android:contentDescription="@string/app_name"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -14,12 +14,12 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:src="@drawable/ic_alarm"
-        android:tint="@color/colorIcons"
         android:layout_marginStart="@dimen/_8sdp"
         android:layout_marginEnd="@dimen/_8sdp"
         android:layout_marginTop="@dimen/_10sdp"
         android:id="@+id/imageAlarm"
-        android:contentDescription="@string/app_name" />
+        android:contentDescription="@string/app_name"
+        app:tint="@color/colorIcons" />
 
     <TextView
         android:layout_width="0dp"

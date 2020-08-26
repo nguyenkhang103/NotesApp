@@ -22,13 +22,13 @@
                  android:layout_width="@dimen/_24sdp"
                  android:layout_height="@dimen/_24sdp"
                  android:src="@drawable/ic_back"
-                 android:tint="@color/colorIcons"
                  android:layout_marginStart="@dimen/_12sdp"
                  android:layout_marginTop="@dimen/_12sdp"
                  android:layout_marginEnd="@dimen/_12sdp"
                  android:contentDescription="@string/app_name"
                  app:layout_constraintTop_toTopOf="parent"
-                 app:layout_constraintStart_toStartOf="parent"/>
+                 app:layout_constraintStart_toStartOf="parent"
+                 app:tint="@color/colorIcons" />
 
             <ImageView
                 android:id="@+id/imageDone"
@@ -36,13 +36,13 @@
                 android:layout_height="@dimen/_24sdp"
                 android:background="@drawable/background_done_button"
                 android:src="@drawable/ic_done"
-                android:tint="@color/colorIcons"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/imageBack"
                 app:layout_constraintBottom_toBottomOf="@id/imageBack"
                 android:contentDescription="@string/app_name"
                 android:layout_marginEnd="@dimen/_12sdp"
-                android:padding="@dimen/_4sdp"/>
+                android:padding="@dimen/_4sdp"
+                app:tint="@color/colorIcons" />
 
             <EditText
                 android:layout_width="@dimen/_250sdp"
@@ -70,7 +70,6 @@
                 android:layout_height="@dimen/_24sdp"
                 android:id="@+id/imageEditTextStyle"
                 android:src="@drawable/ic_edit"
-                android:tint="@color/colorIcons"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/inputNoteTitle"
                 app:layout_constraintBottom_toBottomOf="@id/inputNoteTitle"
@@ -78,7 +77,8 @@
                 android:layout_marginStart="@dimen/_24sdp"
                 android:layout_marginTop="@dimen/_12sdp"
                 android:contentDescription="@string/app_name"
-                android:visibility="gone"/>
+                android:visibility="gone"
+                app:tint="@color/colorIcons" />
 
 
 
@@ -133,7 +133,6 @@
                 android:layout_height="@dimen/_24sdp"
                 android:id="@+id/imageEditTextStyleSub"
                 android:src="@drawable/ic_edit"
-                android:tint="@color/colorIcons"
                 app:layout_constraintTop_toBottomOf="@id/textDateTime"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toBottomOf="@id/inputTextSubNote"
@@ -141,7 +140,8 @@
                 android:layout_marginStart="@dimen/_8sdp"
                 android:layout_marginTop="@dimen/_12sdp"
                 android:contentDescription="@string/app_name"
-                android:visibility="gone"/>
+                android:visibility="gone"
+                app:tint="@color/colorIcons" />
 
             <ImageView
                 android:layout_width="match_parent"
@@ -167,8 +167,8 @@
                 app:layout_constraintTop_toTopOf="@id/imageNote"
                 android:background="@drawable/background_delete_button"
                 android:src="@drawable/ic_delete"
-                android:tint="@color/colorWhite"
-                android:padding="@dimen/_4sdp"/>
+                android:padding="@dimen/_4sdp"
+                app:tint="@color/colorWhite" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -197,8 +197,8 @@
                     android:layout_width="@dimen/_24sdp"
                     android:layout_height="@dimen/_24sdp"
                     android:src="@drawable/ic_delete"
-                    android:tint="@color/colorDelete"
-                    android:contentDescription="@string/app_name"/>
+                    android:contentDescription="@string/app_name"
+                    app:tint="@color/colorDelete" />
 
             </LinearLayout>
 
@@ -229,8 +229,8 @@
                     android:layout_width="@dimen/_24sdp"
                     android:layout_height="@dimen/_24sdp"
                     android:src="@drawable/ic_delete"
-                    android:tint="@color/colorDelete"
-                    android:contentDescription="@string/app_name"/>
+                    android:contentDescription="@string/app_name"
+                    app:tint="@color/colorDelete" />
 
             </LinearLayout>
 
@@ -257,7 +257,6 @@
                 android:layout_height="@dimen/_24sdp"
                 android:id="@+id/imageEditTextStyleContent"
                 android:src="@drawable/ic_edit"
-                android:tint="@color/colorIcons"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toBottomOf="@id/inputNoteContent"
                 app:layout_constraintStart_toEndOf="@id/inputNoteContent"
@@ -265,7 +264,8 @@
                 android:layout_marginStart="@dimen/_8sdp"
                 android:layout_marginTop="@dimen/_20sdp"
                 android:contentDescription="@string/app_name"
-                android:visibility="gone"/>
+                android:visibility="gone"
+                app:tint="@color/colorIcons" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

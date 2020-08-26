@@ -13,13 +13,13 @@
         android:layout_width="@dimen/_24sdp"
         android:layout_height="@dimen/_24sdp"
         android:src="@drawable/ic_delete"
-        android:tint="@color/colorWhite"
         android:contentDescription="@string/app_name"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginStart="@dimen/_8sdp"
         android:layout_marginEnd="@dimen/_8sdp"
-        android:layout_marginTop="@dimen/_10sdp"/>
+        android:layout_marginTop="@dimen/_10sdp"
+        app:tint="@color/colorWhite" />
 
     <TextView
         android:layout_width="0dp"
