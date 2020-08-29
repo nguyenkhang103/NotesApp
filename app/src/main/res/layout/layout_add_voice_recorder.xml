@@ -38,6 +38,24 @@
         app:layout_constraintTop_toTopOf="@id/imageMic"
         android:includeFontPadding="false"/>
 
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/inputFileName"
+        android:hint="@string/enter_file_name_here"
+        android:textColor="@color/colorWhite"
+        android:textColorHint="@color/colorTextHint"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/imageMic"
+        android:layout_marginStart="@dimen/_15sdp"
+        android:layout_marginTop="@dimen/_10sdp"
+        android:layout_marginEnd="@dimen/_15sdp"
+        android:background="@null"
+        android:inputType="text"
+        android:autofillHints="@string/app_name"
+        android:includeFontPadding="false"/>
+
    <Chronometer
        android:layout_width="wrap_content"
        android:layout_height="wrap_content"
@@ -47,30 +65,21 @@
        android:layout_marginTop="@dimen/_10sdp"
        app:layout_constraintStart_toStartOf="parent"
        app:layout_constraintEnd_toEndOf="parent"
-       app:layout_constraintTop_toBottomOf="@id/imageMic"
+       app:layout_constraintTop_toBottomOf="@id/inputFileName"
        android:id="@+id/cmRecorder"/>
 
-    <ImageView
+    <ImageButton
         android:layout_width="@dimen/_50sdp"
         android:layout_height="@dimen/_50sdp"
-        android:background="@drawable/background_done_button"
+        android:background="@drawable/background_stop_recording"
         android:src="@drawable/ic_mic"
-        app:tint="@color/colorIcons"
         app:layout_constraintTop_toBottomOf="@id/cmRecorder"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="@dimen/_10sdp"
-        android:id="@+id/imageRecordVoice"/>
-    <ImageView
-        android:layout_width="@dimen/_35sdp"
-        android:layout_height="@dimen/_35sdp"
-        android:src="@drawable/ic_list"
-        app:tint="@color/colorIcons"
-        app:layout_constraintTop_toTopOf="@id/imageRecordVoice"
-        app:layout_constraintStart_toEndOf="@id/imageRecordVoice"
-        app:layout_constraintBottom_toBottomOf="@id/imageRecordVoice"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:id="@+id/imageListRecordButton"/>
+        android:id="@+id/imageRecordVoice"
+        android:contentDescription="@string/app_name"
+        app:tint="@color/colorWhite" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -82,7 +91,7 @@
         android:fontFamily="@font/ubuntu_medium"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/imageListRecordButton"
+        app:layout_constraintTop_toBottomOf="@id/imageRecordVoice"
         android:layout_marginTop="@dimen/_15sdp"
         android:layout_marginEnd="@dimen/_8sdp"
         android:layout_marginBottom="@dimen/_8sdp"
@@ -99,7 +108,7 @@
         android:fontFamily="@font/ubuntu_medium"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/textAddVoiceRecorder"
-        app:layout_constraintTop_toBottomOf="@id/imageListRecordButton"
+        app:layout_constraintTop_toBottomOf="@id/imageRecordVoice"
         android:layout_marginEnd="@dimen/_8sdp"
         android:layout_marginTop="@dimen/_8sdp"
         android:layout_marginStart="@dimen/_8sdp"

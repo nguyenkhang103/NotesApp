@@ -50,6 +50,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -75,16 +76,16 @@ import java.util.regex.Pattern;
 
 public class CreateNoteActivity extends AppCompatActivity {
     private EditText inputNoteTitle, inputNoteSubtitle, inputNoteContent;
-    private TextView txtDateTime, txtLinkURL, txtTimeReminder;
-    private ImageView imgNote, imageEditText, imageEditTextContent, imgDone;
+    private TextView txtDateTime, txtLinkURL, txtTimeReminder, txtFileName;
+    private ImageView imgNote, imageEditText, imageEditTextContent, imgDone, imgPlayRecord;
     private String selectedColor, titleFontFamily, contentFontFamily;
     private String selectedImagePath;
     private int selectedTextColor, selectedContentColor;
     private View viewSubtitleIndicator;
     private boolean isBold, isItalic, isUnderline, isLeft, isCenter, isRight;
     private boolean isBoldContent, isItalicContent, isUnderlineContent, isLeftContent, isCenterContent, isRightContent;
-
-    private LinearLayout layoutLinkURL, layoutDeleteNote, layoutTimeReminder;
+    private boolean isRecording = false;
+    private LinearLayout layoutLinkURL, layoutDeleteNote, layoutTimeReminder, layoutVoiceRecorder;
 
     private static final int REQUEST_CODE_STORAGE_PERMISSION = 1;
     private static final int REQUEST_CODE_SELECT_IMAGE = 2;
@@ -118,11 +119,14 @@ public class CreateNoteActivity extends AppCompatActivity {
         txtDateTime = findViewById(R.id.textDateTime);
         imgDone = findViewById(R.id.imageDone);
         imgNote = findViewById(R.id.imageNote);
+        imgPlayRecord = findViewById(R.id.imagePlayRecord);
         viewSubtitleIndicator = findViewById(R.id.viewSubTitleIndicator);
         layoutLinkURL = findViewById(R.id.layoutLinkURL);
         layoutTimeReminder = findViewById(R.id.layoutTimeReminder);
+        layoutVoiceRecorder = findViewById(R.id.layoutVoiceRecorder);
         txtLinkURL = findViewById(R.id.textLinkURL);
         txtTimeReminder = findViewById(R.id.textTimeReminder);
+        txtFileName = findViewById(R.id.textVoiceRecorder);
         imageEditText = findViewById(R.id.imageEditTextStyle);
         imageEditTextContent = findViewById(R.id.imageEditTextStyleContent);
         inputNoteTitle.setTextSize(25);
@@ -141,6 +145,14 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 saveNote();
+            }
+        });
+
+
+        imgPlayRecord.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                initPlayerSheet();
             }
         });
 
@@ -163,7 +175,7 @@ public class CreateNoteActivity extends AppCompatActivity {
         contentAlign = "START";
         if (getIntent().getBooleanExtra("isViewOrUpdateNote", false)) {
             selectedNote = (Note) getIntent().getSerializableExtra("note");
-            isNotified = getIntent().getBooleanExtra("isNotifiedUpdate",false);
+            isNotified = getIntent().getBooleanExtra("isNotifiedUpdate", false);
             setViewOrUpdateNote();
         }
         findViewById(R.id.imageDeleteImage).setOnClickListener(new View.OnClickListener() {
@@ -191,6 +203,14 @@ public class CreateNoteActivity extends AppCompatActivity {
                 txtTimeReminder.setText(null);
                 imgDone.setVisibility(View.VISIBLE);
                 layoutTimeReminder.setVisibility(View.GONE);
+            }
+        });
+        findViewById(R.id.imageDeleteVoiceRecorder).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                txtFileName.setText(null);
+                imgDone.setVisibility(View.VISIBLE);
+                layoutVoiceRecorder.setVisibility(View.GONE);
             }
         });
         if (getIntent().getBooleanExtra("isQuickActionNote", false)) {
@@ -261,6 +281,35 @@ public class CreateNoteActivity extends AppCompatActivity {
         setSubtitleIndicator();
     }
 
+    private void initPlayerSheet() {
+        final LinearLayout layoutPlayerSheet = findViewById(R.id.layout_player_sheet);
+        final LinearLayout layoutMiscellaneous = findViewById(R.id.layout_miscellaneous);
+        final BottomSheetBehavior<LinearLayout> bottomSheetBehavior = BottomSheetBehavior.from(layoutPlayerSheet);
+        layoutMiscellaneous.setVisibility(View.GONE);
+        layoutPlayerSheet.setVisibility(View.VISIBLE);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        layoutPlayerSheet.findViewById(R.id.imageBackText).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                layoutPlayerSheet.setVisibility(View.GONE);
+                layoutMiscellaneous.setVisibility(View.VISIBLE);
+                initMiscellaneous();
+            }
+        });
+        layoutPlayerSheet.findViewById(R.id.textRecording).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                } else {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                }
+            }
+        });
+        final TextView fileNameRecord =  layoutPlayerSheet.findViewById(R.id.textFileName);
+        fileNameRecord.setText(txtFileName.getText().toString());
+    }
+
     private void setViewOrUpdateNote() {
 
         Typeface typeface, typefaceContent;
@@ -291,7 +340,7 @@ public class CreateNoteActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable editable) {
-                if(!editable.toString().equals(selectedNote.getTitle())) {
+                if (!editable.toString().equals(selectedNote.getTitle())) {
                     imgDone.setVisibility(View.VISIBLE);
                 }
             }
@@ -309,7 +358,7 @@ public class CreateNoteActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable editable) {
-                if(!editable.toString().equals(selectedNote.getNoteContent())) {
+                if (!editable.toString().equals(selectedNote.getNoteContent())) {
                     imgDone.setVisibility(View.VISIBLE);
                 }
             }
@@ -327,7 +376,7 @@ public class CreateNoteActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable editable) {
-                if(!editable.toString().equals(selectedNote.getSubtitle())) {
+                if (!editable.toString().equals(selectedNote.getSubtitle())) {
                     imgDone.setVisibility(View.VISIBLE);
                 }
             }
@@ -512,7 +561,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             } else if (!selectedNote.isContentBold() && selectedNote.isContentItalic()) {
                 contentNote.setSpan(new StyleSpan(Typeface.ITALIC), 0, contentNote.length(), 0);
             } else if (!selectedNote.isContentBold() && !selectedNote.isContentItalic()) {
-                contentNote.setSpan(new StyleSpan(Typeface.NORMAL), 0, contentNote.length(),0);
+                contentNote.setSpan(new StyleSpan(Typeface.NORMAL), 0, contentNote.length(), 0);
             }
             inputNoteContent.setText(contentNote);
         }
@@ -548,7 +597,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             Date timeRemind = new Date(selectedNote.getTimeReminder().toString().trim());
             layoutTimeReminder.setVisibility(View.VISIBLE);
             String tmp = sdf3.format(timeRemind);
-            if(Calendar.getInstance().getTime().after(timeRemind)) {
+            if (Calendar.getInstance().getTime().after(timeRemind)) {
                 SpannableStringBuilder ssBuilder = new SpannableStringBuilder(tmp);
                 StrikethroughSpan strikethroughSpan = new StrikethroughSpan();
                 ssBuilder.setSpan(
@@ -1844,71 +1893,43 @@ public class CreateNoteActivity extends AppCompatActivity {
             View view = LayoutInflater.from(this).inflate(R.layout.layout_add_voice_recorder, (ViewGroup) findViewById(R.id.layoutAddVoiceRecorderDialog));
             builder.setView(view);
             alertDialogVoiceRecorder = builder.create();
-
             if (alertDialogVoiceRecorder.getWindow() != null) {
                 alertDialogVoiceRecorder.getWindow().setBackgroundDrawable(new ColorDrawable(0));
             }
-//            final TextView textDateAndTime = view.findViewById(R.id.dateAndTime);
-//            final Calendar newCalender = Calendar.getInstance();
-//            view.findViewById(R.id.selectDate).setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
-//                    DatePickerDialog datePickerDialog = new DatePickerDialog(CreateNoteActivity.this, new DatePickerDialog.OnDateSetListener() {
-//                        @Override
-//                        public void onDateSet(DatePicker datePicker, final int year, final int month, final int day) {
-//                            final Calendar newDate = Calendar.getInstance();
-//                            Calendar newTime = Calendar.getInstance();
-//                            TimePickerDialog timePickerDialog = new TimePickerDialog(CreateNoteActivity.this, new TimePickerDialog.OnTimeSetListener() {
-//                                @Override
-//                                public void onTimeSet(TimePicker timePicker, int hour, int minute) {
-//                                    newDate.set(year, month, day, hour, minute, 0);
-//                                    Calendar currentDateTime = Calendar.getInstance();
-//                                    if (newDate.getTimeInMillis() - currentDateTime.getTimeInMillis() > 0) {
-//                                        textDateAndTime.setText(newDate.getTime().toString());
-//                                    } else
-//                                        Toast.makeText(CreateNoteActivity.this, "Invalid time", Toast.LENGTH_SHORT).show();
-//                                }
-//                            }, newTime.get(Calendar.HOUR_OF_DAY), newTime.get(Calendar.MINUTE), true);
-//                            timePickerDialog.show();
-//                        }
-//                    }, newCalender.get(Calendar.YEAR), newCalender.get(Calendar.MONTH), newCalender.get(Calendar.DAY_OF_MONTH));
-//
-//                    datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
-//                    datePickerDialog.show();
-//                }
-//            });
-//
-//            view.findViewById(R.id.textAddTimeReminder).setOnClickListener(new View.OnClickListener() {
-//                @SuppressLint("SimpleDateFormat")
-//                @Override
-//                public void onClick(View view) {
-//                    SimpleDateFormat sdf3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
-//                    Date timeRemind = null;
-//                    try {
-//                        timeRemind = sdf3.parse(textDateAndTime.getText().toString());
-//                        timeReminder = timeRemind;
-//                        assert timeRemind != null;
-//                        sdf3 = new SimpleDateFormat("EEEE, dd MMMM yyyy HH:mm a");
-//                        txtTimeReminder.setText(sdf3.format(timeRemind));
-//                        Log.w("New time", timeRemind + "");
-//                        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
-//                        calendar.setTime(timeRemind);
-//                        calendar.set(Calendar.SECOND, 0);
-//                        isNotifyCreated = false;
-//                        findViewById(R.id.layoutTimeReminder).setVisibility(View.VISIBLE);
-//                        alertDialogTimeReminder.dismiss();
-//
-//                    } catch (ParseException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            });
-//            view.findViewById(R.id.textCancel).setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
-//                    alertDialogTimeReminder.dismiss();
-//                }
-//            });
+            final ImageButton imageRecordButton = view.findViewById(R.id.imageRecordVoice);
+            imageRecordButton.setOnClickListener(new View.OnClickListener() {
+                @SuppressLint("UseCompatLoadingForDrawables")
+                @Override
+                public void onClick(View view) {
+                    if(isRecording) {
+                        imageRecordButton.setBackground(getResources().getDrawable(R.drawable.background_stop_recording));
+                        isRecording = false;
+                    } else {
+                        imageRecordButton.setBackground(getResources().getDrawable(R.drawable.background_start_recording));
+                        isRecording = true;
+                    }
+                }
+            });
+            final EditText fileName = view.findViewById(R.id.inputFileName);
+            view.findViewById(R.id.textAddVoiceRecorder).setOnClickListener(new View.OnClickListener() {
+                @SuppressLint("SimpleDateFormat")
+                @Override
+                public void onClick(View view) {
+                    if (fileName.getText().toString().trim().isEmpty()) {
+                        Toast.makeText(CreateNoteActivity.this, "File name can't be empty!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        txtFileName.setText(fileName.getText().toString());
+                        layoutVoiceRecorder.setVisibility(View.VISIBLE);
+                        alertDialogVoiceRecorder.dismiss();
+                    }
+                }
+            });
+            view.findViewById(R.id.textCancel).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    alertDialogVoiceRecorder.dismiss();
+                }
+            });
         }
         alertDialogVoiceRecorder.show();
     }
