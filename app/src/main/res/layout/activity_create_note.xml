@@ -243,7 +243,7 @@
                 android:layout_marginStart="@dimen/_12sdp"
                 android:layout_marginEnd="@dimen/_12sdp"
                 android:layout_marginTop="@dimen/_15sdp"
-                app:layout_constraintTop_toBottomOf="@id/layoutLinkURL"
+                app:layout_constraintTop_toBottomOf="@id/layoutTimeReminder"
                 android:visibility="gone"
                 tools:ignore="UseCompoundDrawables">
 

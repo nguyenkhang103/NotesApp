@@ -4,6 +4,9 @@
     package="com.example.kaido.noteapp">
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:allowBackup="true"
         android:icon="@mipmap/icon"
@@ -12,6 +15,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true"
         tools:targetApi="q">
         <activity android:name=".activities.CreateNoteActivity" />
         <activity android:name=".activities.MainActivity">
@@ -22,5 +26,6 @@
             </intent-filter>
         </activity>
         <receiver android:name=".activities.NotifierAlarmActivity" />
+
     </application>
 </manifest>

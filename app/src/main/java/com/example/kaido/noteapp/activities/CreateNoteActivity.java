@@ -2,6 +2,7 @@ package com.example.kaido.noteapp.activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -14,6 +15,7 @@ import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
@@ -26,10 +28,16 @@ import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.media.ResourceBusyException;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.SpannableString;
@@ -48,11 +56,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Chronometer;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -63,6 +73,9 @@ import com.example.kaido.noteapp.database.NoteDB;
 import com.example.kaido.noteapp.entities.Note;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.text.DateFormat;
@@ -71,13 +84,14 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
 public class CreateNoteActivity extends AppCompatActivity {
     private EditText inputNoteTitle, inputNoteSubtitle, inputNoteContent;
     private TextView txtDateTime, txtLinkURL, txtTimeReminder, txtFileName;
-    private ImageView imgNote, imageEditText, imageEditTextContent, imgDone, imgPlayRecord;
+    private ImageView imgNote, imageEditText, imageEditTextContent, imgDone, imgPlayRecord, imgPlayButton;
     private String selectedColor, titleFontFamily, contentFontFamily;
     private String selectedImagePath;
     private int selectedTextColor, selectedContentColor;
@@ -87,8 +101,8 @@ public class CreateNoteActivity extends AppCompatActivity {
     private boolean isRecording = false;
     private LinearLayout layoutLinkURL, layoutDeleteNote, layoutTimeReminder, layoutVoiceRecorder;
 
-    private static final int REQUEST_CODE_STORAGE_PERMISSION = 1;
     private static final int REQUEST_CODE_SELECT_IMAGE = 2;
+    private static final int RECORD_AUDIO_REQUEST_CODE =123 ;
 
     private AlertDialog alertDialog, alertDialogTimeReminder, alertDialogVoiceRecorder;
     private AlertDialog alertDialogDeleteNote;
@@ -96,14 +110,30 @@ public class CreateNoteActivity extends AppCompatActivity {
     private Note selectedNote;
     private int titleTextSize, contentTextSize;
     private String titleAlgin, contentAlign;
+    private String filePath = "";
+    private String finalPath = "";
     private Date timeReminder;
-    private boolean isNotified;
     private boolean isNotifyCreated;
+
+    private Chronometer timer;
+    private MediaRecorder mediaRecorder;
+    private MediaPlayer mediaPlayer = null;
+    private boolean isPlaying = false;
+
+    private File fileToPlay = null;
+    private SeekBar playerSeekBar;
+    private Handler seekBarHandler;
+    private Runnable updateSeekBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_note);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getPermissionToRecordAudio();
+        }
+        
         ImageView imgBack = findViewById(R.id.imageBack);
         imgBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -149,10 +179,17 @@ public class CreateNoteActivity extends AppCompatActivity {
         });
 
 
+        mediaPlayer = new MediaPlayer();
         imgPlayRecord.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Log.d("isPlaying",isPlaying+"");
+                prepareAudio();
                 initPlayerSheet();
+                if (isPlaying) {
+                    stopAudio();
+                }
+                playAudio();
             }
         });
 
@@ -173,9 +210,12 @@ public class CreateNoteActivity extends AppCompatActivity {
         isCenterContent = false;
         isRightContent = false;
         contentAlign = "START";
+
+
+
         if (getIntent().getBooleanExtra("isViewOrUpdateNote", false)) {
             selectedNote = (Note) getIntent().getSerializableExtra("note");
-            isNotified = getIntent().getBooleanExtra("isNotifiedUpdate", false);
+            boolean isNotified = getIntent().getBooleanExtra("isNotifiedUpdate", false);
             setViewOrUpdateNote();
         }
         findViewById(R.id.imageDeleteImage).setOnClickListener(new View.OnClickListener() {
@@ -281,6 +321,81 @@ public class CreateNoteActivity extends AppCompatActivity {
         setSubtitleIndicator();
     }
 
+
+
+    private void prepareAudio() {
+        try {
+            Log.d("PATH",finalPath);
+            mediaPlayer.reset();
+//            mediaPlayer.setDataSource("http://infinityandroid.com/music/good_times.mp3");
+            mediaPlayer.setDataSource(finalPath);
+            mediaPlayer.prepare();
+        }catch (Exception ex) {
+            Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.d("EX", ex.getMessage());
+        }
+    }
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private void playAudio() {
+//        Log.d("FILE",fileToPlay.getAbsolutePath());
+//
+//        try {
+//            mediaPlayer.reset();
+//            mediaPlayer.setDataSource(this,Uri.fromFile(new File(fileToPlay.getAbsolutePath())));
+//            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+//                @Override
+//                public void onPrepared(MediaPlayer mediaPlayer) {
+//                    mediaPlayer.start();
+//                }
+//            });
+//            mediaPlayer.prepareAsync();
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        Log.d("PATH",filePath);
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mediaPlayer) {
+                mediaPlayer.start();
+            }
+        });
+        imgPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause,null));
+        isPlaying = true;
+        playerSeekBar.setMax(mediaPlayer.getDuration());
+        Log.d("DURATION",mediaPlayer.getDuration()+"");
+        seekBarHandler = new Handler();
+        updateSeekBar();
+        seekBarHandler.postDelayed(updateSeekBar, 0);
+
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                stopAudio();
+            }
+        });
+
+
+    }
+
+    private void updateSeekBar() {
+        updateSeekBar = new Runnable() {
+            @Override
+            public void run() {
+                playerSeekBar.setProgress(mediaPlayer.getCurrentPosition());
+                seekBarHandler.postDelayed(this,500);
+            }
+        };
+    }
+
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private void stopAudio() {
+        imgPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_play,null));
+        isPlaying = false;
+        mediaPlayer.stop();
+        seekBarHandler.removeCallbacks(updateSeekBar);
+    }
+
     private void initPlayerSheet() {
         final LinearLayout layoutPlayerSheet = findViewById(R.id.layout_player_sheet);
         final LinearLayout layoutMiscellaneous = findViewById(R.id.layout_miscellaneous);
@@ -306,8 +421,64 @@ public class CreateNoteActivity extends AppCompatActivity {
                 }
             }
         });
-        final TextView fileNameRecord =  layoutPlayerSheet.findViewById(R.id.textFileName);
+        final TextView fileNameRecord = layoutPlayerSheet.findViewById(R.id.textFileName);
         fileNameRecord.setText(txtFileName.getText().toString());
+        imgPlayButton = layoutPlayerSheet.findViewById(R.id.imagePlayButton);
+        playerSeekBar = layoutPlayerSheet.findViewById(R.id.playerSeekBar);
+        String pathSource = Objects.requireNonNull(this.getExternalFilesDir("/")).getAbsolutePath();
+        String path = txtFileName.getText().toString() + txtDateTime.getText().toString() + ".3gp";
+        fileToPlay = new File(pathSource + "/" + path);
+        imgPlayButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(isPlaying){
+                    pauseAudio();
+//                    stopAudio();
+                } else {
+                    if(fileToPlay != null){
+                        resumeAudio();
+//                        Log.d("PATH",fileToPlay.getAbsolutePath());
+//                        playAudio(fileToPlay);
+                    }
+                }
+            }
+        });
+
+        playerSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                pauseAudio();
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                int progress = seekBar.getProgress();
+                mediaPlayer.seekTo(progress);
+                resumeAudio();
+            }
+        });
+    }
+
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private void resumeAudio() {
+        imgPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause,null));
+        mediaPlayer.start();
+        isPlaying = true;
+        updateSeekBar();
+        seekBarHandler.postDelayed(updateSeekBar,0);
+    }
+
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private void pauseAudio() {
+        mediaPlayer.pause();
+        imgPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_play,null));
+        isPlaying = false;
+        seekBarHandler.removeCallbacks(updateSeekBar);
     }
 
     private void setViewOrUpdateNote() {
@@ -1617,15 +1788,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             public void onClick(View view) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 imgDone.setVisibility(View.VISIBLE);
-                if (ContextCompat.checkSelfPermission(
-                        getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE
-                ) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(CreateNoteActivity.this,
-                            new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                            REQUEST_CODE_STORAGE_PERMISSION);
-                } else {
-                    selectImage();
-                }
+                selectImage();
             }
         });
         layoutMiscellaneous.findViewById(R.id.layoutAddURL).setOnClickListener(new View.OnClickListener() {
@@ -1651,6 +1814,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             public void onClick(View view) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 imgDone.setVisibility(View.VISIBLE);
+
                 showAddVoiceRecorderDialog();
             }
         });
@@ -1681,17 +1845,7 @@ public class CreateNoteActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE_STORAGE_PERMISSION && grantResults.length > 0) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                selectImage();
-            } else {
-                Toast.makeText(CreateNoteActivity.this, "Permission Denied!", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -1897,20 +2051,25 @@ public class CreateNoteActivity extends AppCompatActivity {
                 alertDialogVoiceRecorder.getWindow().setBackgroundDrawable(new ColorDrawable(0));
             }
             final ImageButton imageRecordButton = view.findViewById(R.id.imageRecordVoice);
+            final EditText fileName = view.findViewById(R.id.inputFileName);
+            timer = view.findViewById(R.id.cmRecorder);
             imageRecordButton.setOnClickListener(new View.OnClickListener() {
                 @SuppressLint("UseCompatLoadingForDrawables")
                 @Override
                 public void onClick(View view) {
-                    if(isRecording) {
+                    if (isRecording) {
+                        // stop recording
+                        stopRecording();
                         imageRecordButton.setBackground(getResources().getDrawable(R.drawable.background_stop_recording));
                         isRecording = false;
                     } else {
+                        // start recording
+                        startRecording(fileName.getText().toString());
                         imageRecordButton.setBackground(getResources().getDrawable(R.drawable.background_start_recording));
                         isRecording = true;
                     }
                 }
             });
-            final EditText fileName = view.findViewById(R.id.inputFileName);
             view.findViewById(R.id.textAddVoiceRecorder).setOnClickListener(new View.OnClickListener() {
                 @SuppressLint("SimpleDateFormat")
                 @Override
@@ -1918,6 +2077,7 @@ public class CreateNoteActivity extends AppCompatActivity {
                     if (fileName.getText().toString().trim().isEmpty()) {
                         Toast.makeText(CreateNoteActivity.this, "File name can't be empty!", Toast.LENGTH_SHORT).show();
                     } else {
+                        mediaRecorder.release();
                         txtFileName.setText(fileName.getText().toString());
                         layoutVoiceRecorder.setVisibility(View.VISIBLE);
                         alertDialogVoiceRecorder.dismiss();
@@ -1932,5 +2092,75 @@ public class CreateNoteActivity extends AppCompatActivity {
             });
         }
         alertDialogVoiceRecorder.show();
+    }
+
+    private void startRecording(String fileName) {
+        timer.setBase(SystemClock.elapsedRealtime());
+        timer.start();
+
+        mediaRecorder = new MediaRecorder();
+        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        File root = android.os.Environment.getExternalStorageDirectory();
+        File file = new File(root.getAbsolutePath() + "/NoteApp/Audios");
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+
+        finalPath =  root.getAbsolutePath() + "/NoteApp/Audios/" +fileName +"_"+ (System.currentTimeMillis() + ".mp3");
+        Log.d("finalPath",finalPath);
+        mediaRecorder.setOutputFile(finalPath);
+        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        fileToPlay = new File(finalPath);
+        try {
+            mediaRecorder.prepare();
+            mediaRecorder.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void stopRecording() {
+        timer.stop();
+        mediaRecorder.stop();
+        mediaRecorder.release();
+        mediaRecorder = null;
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (isRecording) {
+            stopRecording();
+        }
+        if(isPlaying) {
+            stopAudio();
+        }
+    }
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void getPermissionToRecordAudio() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ) {
+
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    RECORD_AUDIO_REQUEST_CODE);
+
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == RECORD_AUDIO_REQUEST_CODE) {
+            if (grantResults.length == 3 &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED
+                    && grantResults[1] == PackageManager.PERMISSION_GRANTED
+                    && grantResults[2] == PackageManager.PERMISSION_GRANTED){
+            } else {
+                Toast.makeText(this, "You must give permissions to use this app. App is exiting.", Toast.LENGTH_SHORT).show();
+                finishAffinity();
+            }
+        }
     }
 }
