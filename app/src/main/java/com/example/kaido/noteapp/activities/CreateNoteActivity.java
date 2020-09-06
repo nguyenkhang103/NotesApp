@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 
@@ -15,10 +14,8 @@ import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -26,16 +23,13 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
-import android.media.ResourceBusyException;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.provider.MediaStore;
@@ -46,12 +40,10 @@ import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
-import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -74,11 +66,8 @@ import com.example.kaido.noteapp.entities.Note;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -86,7 +75,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.TimeZone;
-import java.util.regex.Pattern;
 
 public class CreateNoteActivity extends AppCompatActivity {
     private EditText inputNoteTitle, inputNoteSubtitle, inputNoteContent;
@@ -94,6 +82,7 @@ public class CreateNoteActivity extends AppCompatActivity {
     private ImageView imgNote, imageEditText, imageEditTextContent, imgDone, imgPlayRecord, imgPlayButton;
     private String selectedColor, titleFontFamily, contentFontFamily;
     private String selectedImagePath;
+    private String textFileName = "";
     private int selectedTextColor, selectedContentColor;
     private View viewSubtitleIndicator;
     private boolean isBold, isItalic, isUnderline, isLeft, isCenter, isRight;
@@ -102,7 +91,7 @@ public class CreateNoteActivity extends AppCompatActivity {
     private LinearLayout layoutLinkURL, layoutDeleteNote, layoutTimeReminder, layoutVoiceRecorder;
 
     private static final int REQUEST_CODE_SELECT_IMAGE = 2;
-    private static final int RECORD_AUDIO_REQUEST_CODE =123 ;
+    private static final int RECORD_AUDIO_REQUEST_CODE = 123;
 
     private AlertDialog alertDialog, alertDialogTimeReminder, alertDialogVoiceRecorder;
     private AlertDialog alertDialogDeleteNote;
@@ -124,6 +113,9 @@ public class CreateNoteActivity extends AppCompatActivity {
     private SeekBar playerSeekBar;
     private Handler seekBarHandler;
     private Runnable updateSeekBar;
+    private boolean isPausing = false;
+    private boolean isResetPlayer = false;
+    private boolean isPrepared = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,7 +125,7 @@ public class CreateNoteActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             getPermissionToRecordAudio();
         }
-        
+
         ImageView imgBack = findViewById(R.id.imageBack);
         imgBack.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -180,18 +172,7 @@ public class CreateNoteActivity extends AppCompatActivity {
 
 
         mediaPlayer = new MediaPlayer();
-        imgPlayRecord.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.d("isPlaying",isPlaying+"");
-                prepareAudio();
-                initPlayerSheet();
-                if (isPlaying) {
-                    stopAudio();
-                }
-                playAudio();
-            }
-        });
+
 
         selectedColor = "#333333";
         selectedImagePath = "";
@@ -210,7 +191,6 @@ public class CreateNoteActivity extends AppCompatActivity {
         isCenterContent = false;
         isRightContent = false;
         contentAlign = "START";
-
 
 
         if (getIntent().getBooleanExtra("isViewOrUpdateNote", false)) {
@@ -256,22 +236,51 @@ public class CreateNoteActivity extends AppCompatActivity {
         if (getIntent().getBooleanExtra("isQuickActionNote", false)) {
             String type = getIntent().getStringExtra("quickActionType");
             if (type != null) {
-                if (type.equals("images")) {
-                    selectedImagePath = getIntent().getStringExtra("imagePath");
-                    imgNote.setImageBitmap(BitmapFactory.decodeFile(selectedImagePath));
-                    imgNote.setVisibility(View.VISIBLE);
-                    findViewById(R.id.imageDeleteImage).setVisibility(View.VISIBLE);
-                } else if (type.equals("web_link")) {
-                    txtLinkURL.setText(getIntent().getStringExtra("url"));
-                    layoutLinkURL.setVisibility(View.VISIBLE);
-                    findViewById(R.id.imageDeleteLinkWeb).setVisibility(View.VISIBLE);
-                } else if (type.equals("time_reminder")) {
-                    txtTimeReminder.setText(getIntent().getStringExtra("date_time"));
-                    layoutTimeReminder.setVisibility(View.VISIBLE);
-                    findViewById(R.id.imageDeleteTimeReminder).setVisibility(View.VISIBLE);
+                switch (type) {
+                    case "images":
+                        selectedImagePath = getIntent().getStringExtra("imagePath");
+                        imgNote.setImageBitmap(BitmapFactory.decodeFile(selectedImagePath));
+                        imgNote.setVisibility(View.VISIBLE);
+                        findViewById(R.id.imageDeleteImage).setVisibility(View.VISIBLE);
+                        break;
+                    case "web_link":
+                        txtLinkURL.setText(getIntent().getStringExtra("url"));
+                        layoutLinkURL.setVisibility(View.VISIBLE);
+                        findViewById(R.id.imageDeleteLinkWeb).setVisibility(View.VISIBLE);
+                        break;
+                    case "time_reminder":
+                        txtTimeReminder.setText(getIntent().getStringExtra("date_time"));
+                        layoutTimeReminder.setVisibility(View.VISIBLE);
+                        findViewById(R.id.imageDeleteTimeReminder).setVisibility(View.VISIBLE);
+                        break;
+                    case "voice_record":
+                        String tmp = Objects.requireNonNull(getIntent().getStringExtra("path")).substring(35);
+                        finalPath = getIntent().getStringExtra("path");
+                        txtFileName.setText(tmp);
+                        layoutVoiceRecorder.setVisibility(View.VISIBLE);
+                        findViewById(R.id.imageDeleteVoiceRecorder).setVisibility(View.VISIBLE);
+                        break;
                 }
             }
         }
+        imgPlayRecord.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                initPlayerSheet();
+                prepareAudio();
+                try {
+                    if (isPlaying) {
+                        stopAudio();
+                        playAudio();
+                    } else {
+                        playAudio();
+                    }
+                } catch (RuntimeException ex) {
+                    ex.printStackTrace();
+                }
+
+            }
+        });
         inputNoteTitle.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -321,57 +330,53 @@ public class CreateNoteActivity extends AppCompatActivity {
         setSubtitleIndicator();
     }
 
-
+    private void initFilePath(String fileName) {
+        File root = android.os.Environment.getExternalStorageDirectory();
+        File file = new File(root.getAbsolutePath() + "/NoteApp/Audios");
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        finalPath = root.getAbsolutePath() + "/NoteApp/Audios/" + fileName + "_" + (System.currentTimeMillis() + ".mp3");
+        fileToPlay = new File(finalPath);
+    }
 
     private void prepareAudio() {
         try {
-            Log.d("PATH",finalPath);
             mediaPlayer.reset();
-//            mediaPlayer.setDataSource("http://infinityandroid.com/music/good_times.mp3");
             mediaPlayer.setDataSource(finalPath);
             mediaPlayer.prepare();
-        }catch (Exception ex) {
-            Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();
-            Log.d("EX", ex.getMessage());
+            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mediaPlayer) {
+                   isPrepared = true;
+                }
+            });
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
     }
+
     @SuppressLint("UseCompatLoadingForDrawables")
     private void playAudio() {
-//        Log.d("FILE",fileToPlay.getAbsolutePath());
-//
-//        try {
-//            mediaPlayer.reset();
-//            mediaPlayer.setDataSource(this,Uri.fromFile(new File(fileToPlay.getAbsolutePath())));
-//            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-//                @Override
-//                public void onPrepared(MediaPlayer mediaPlayer) {
-//                    mediaPlayer.start();
-//                }
-//            });
-//            mediaPlayer.prepareAsync();
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-        Log.d("PATH",filePath);
-        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mediaPlayer) {
-                mediaPlayer.start();
-            }
-        });
-        imgPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause,null));
-        isPlaying = true;
-        playerSeekBar.setMax(mediaPlayer.getDuration());
-        Log.d("DURATION",mediaPlayer.getDuration()+"");
-        seekBarHandler = new Handler();
-        updateSeekBar();
-        seekBarHandler.postDelayed(updateSeekBar, 0);
+        if(isPrepared) {
+            mediaPlayer.start();
+            imgPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause, null));
+            isPlaying = true;
+            playerSeekBar.setMax(mediaPlayer.getDuration());
+            seekBarHandler = new Handler();
+            updateSeekBar();
+            seekBarHandler.postDelayed(updateSeekBar, 0);
+        } else {
+            Toast.makeText(this, "Error when play audio!", Toast.LENGTH_SHORT).show();
+        }
 
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                stopAudio();
+                imgPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_play, null));
+                isPlaying = false;
+                isResetPlayer = true;
+                mediaPlayer.reset();
             }
         });
 
@@ -383,14 +388,14 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             public void run() {
                 playerSeekBar.setProgress(mediaPlayer.getCurrentPosition());
-                seekBarHandler.postDelayed(this,500);
+                seekBarHandler.postDelayed(this, 500);
             }
         };
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
     private void stopAudio() {
-        imgPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_play,null));
+        imgPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_play, null));
         isPlaying = false;
         mediaPlayer.stop();
         seekBarHandler.removeCallbacks(updateSeekBar);
@@ -431,14 +436,15 @@ public class CreateNoteActivity extends AppCompatActivity {
         imgPlayButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(isPlaying){
+                if (isPlaying) {
                     pauseAudio();
-//                    stopAudio();
                 } else {
-                    if(fileToPlay != null){
+                    if (isResetPlayer) {
+                        prepareAudio();
+                        playAudio();
+                        isResetPlayer = false;
+                    } else {
                         resumeAudio();
-//                        Log.d("PATH",fileToPlay.getAbsolutePath());
-//                        playAudio(fileToPlay);
                     }
                 }
             }
@@ -466,17 +472,17 @@ public class CreateNoteActivity extends AppCompatActivity {
 
     @SuppressLint("UseCompatLoadingForDrawables")
     private void resumeAudio() {
-        imgPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause,null));
+        imgPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause, null));
         mediaPlayer.start();
         isPlaying = true;
         updateSeekBar();
-        seekBarHandler.postDelayed(updateSeekBar,0);
+        seekBarHandler.postDelayed(updateSeekBar, 0);
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
     private void pauseAudio() {
         mediaPlayer.pause();
-        imgPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_play,null));
+        imgPlayButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_play, null));
         isPlaying = false;
         seekBarHandler.removeCallbacks(updateSeekBar);
     }
@@ -783,6 +789,15 @@ public class CreateNoteActivity extends AppCompatActivity {
             }
             findViewById(R.id.imageDeleteTimeReminder).setVisibility(View.VISIBLE);
         }
+
+        //voice recorder
+        if (selectedNote.getVoiceRecorder() != null && !selectedNote.getVoiceRecorder().trim().isEmpty()) {
+            String tmp = selectedNote.getVoiceRecorder().substring(35);
+            txtFileName.setText(tmp);
+            layoutVoiceRecorder.setVisibility(View.VISIBLE);
+            findViewById(R.id.imageDeleteVoiceRecorder).setVisibility(View.VISIBLE);
+            finalPath = selectedNote.getVoiceRecorder();
+        }
     }
 
 
@@ -829,7 +844,6 @@ public class CreateNoteActivity extends AppCompatActivity {
         }
         if (layoutTimeReminder.getVisibility() == View.VISIBLE) {
             Date timeRemind = new Date(timeReminder.toString());
-            Log.d("TIME REMINDER", timeRemind.toString());
             note.setTimeReminder(timeRemind);
             Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
             calendar.setTime(timeRemind);
@@ -841,9 +855,11 @@ public class CreateNoteActivity extends AppCompatActivity {
             PendingIntent pendingIntent = PendingIntent.getBroadcast(CreateNoteActivity.this, note.getId(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
             AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
-            layoutTimeReminder.setVisibility(View.GONE);
+//            layoutTimeReminder.setVisibility(View.GONE);
         }
-
+        if (layoutVoiceRecorder.getVisibility() == View.VISIBLE) {
+            note.setVoiceRecorder(finalPath);
+        }
         if (selectedNote != null) {
             note.setId(selectedNote.getId());
         }
@@ -854,7 +870,6 @@ public class CreateNoteActivity extends AppCompatActivity {
             @Override
             protected Void doInBackground(Void... voids) {
                 NoteDB.getNoteDB(getApplicationContext()).noteDAO().insertNote(note);
-                Log.d("NOTE", note + "");
                 return null;
             }
 
@@ -1846,7 +1861,6 @@ public class CreateNoteActivity extends AppCompatActivity {
     }
 
 
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -2053,40 +2067,50 @@ public class CreateNoteActivity extends AppCompatActivity {
             final ImageButton imageRecordButton = view.findViewById(R.id.imageRecordVoice);
             final EditText fileName = view.findViewById(R.id.inputFileName);
             timer = view.findViewById(R.id.cmRecorder);
+            if (fileName.getText().toString().trim().isEmpty()) {
+                textFileName = "Record 01";
+            } else {
+                textFileName = fileName.getText().toString();
+            }
             imageRecordButton.setOnClickListener(new View.OnClickListener() {
+                @RequiresApi(api = Build.VERSION_CODES.N)
                 @SuppressLint("UseCompatLoadingForDrawables")
                 @Override
                 public void onClick(View view) {
                     if (isRecording) {
                         // stop recording
-                        stopRecording();
+                        if (!isPausing) {
+                            pauseRecording();
+                            Log.d("PAUSE", isPausing + "");
+                        }
                         imageRecordButton.setBackground(getResources().getDrawable(R.drawable.background_stop_recording));
                         isRecording = false;
                     } else {
                         // start recording
-                        startRecording(fileName.getText().toString());
+                        if (isPausing) {
+                            resumeRecording();
+                            Log.d("RESUME", isPausing + "");
+                        } else {
+                            startRecording(textFileName);
+                        }
                         imageRecordButton.setBackground(getResources().getDrawable(R.drawable.background_start_recording));
-                        isRecording = true;
                     }
                 }
             });
             view.findViewById(R.id.textAddVoiceRecorder).setOnClickListener(new View.OnClickListener() {
-                @SuppressLint("SimpleDateFormat")
+                @SuppressLint({"SimpleDateFormat", "SetTextI18n"})
                 @Override
                 public void onClick(View view) {
-                    if (fileName.getText().toString().trim().isEmpty()) {
-                        Toast.makeText(CreateNoteActivity.this, "File name can't be empty!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        mediaRecorder.release();
-                        txtFileName.setText(fileName.getText().toString());
-                        layoutVoiceRecorder.setVisibility(View.VISIBLE);
-                        alertDialogVoiceRecorder.dismiss();
-                    }
+                    txtFileName.setText(textFileName);
+                    stopRecording();
+                    layoutVoiceRecorder.setVisibility(View.VISIBLE);
+                    alertDialogVoiceRecorder.dismiss();
                 }
             });
             view.findViewById(R.id.textCancel).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    stopRecording();
                     alertDialogVoiceRecorder.dismiss();
                 }
             });
@@ -2094,24 +2118,17 @@ public class CreateNoteActivity extends AppCompatActivity {
         alertDialogVoiceRecorder.show();
     }
 
+
     private void startRecording(String fileName) {
         timer.setBase(SystemClock.elapsedRealtime());
         timer.start();
-
+        isRecording = true;
         mediaRecorder = new MediaRecorder();
         mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        File root = android.os.Environment.getExternalStorageDirectory();
-        File file = new File(root.getAbsolutePath() + "/NoteApp/Audios");
-        if (!file.exists()) {
-            file.mkdirs();
-        }
-
-        finalPath =  root.getAbsolutePath() + "/NoteApp/Audios/" +fileName +"_"+ (System.currentTimeMillis() + ".mp3");
-        Log.d("finalPath",finalPath);
+        initFilePath(fileName);
         mediaRecorder.setOutputFile(finalPath);
         mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-        fileToPlay = new File(finalPath);
         try {
             mediaRecorder.prepare();
             mediaRecorder.start();
@@ -2120,11 +2137,34 @@ public class CreateNoteActivity extends AppCompatActivity {
         }
     }
 
-    private void stopRecording() {
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void pauseRecording() {
         timer.stop();
-        mediaRecorder.stop();
+        mediaRecorder.pause();
+        isPausing = true;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void resumeRecording() {
+        timer.start();
+        mediaRecorder.resume();
+        isPausing = false;
+        isRecording = true;
+    }
+
+
+    private void stopRecording() {
+        timer.setBase(SystemClock.elapsedRealtime());
+        timer.stop();
+        try {
+            mediaRecorder.stop();
+        } catch (RuntimeException ex) {
+            ex.printStackTrace();
+        }
         mediaRecorder.release();
         mediaRecorder = null;
+        isPausing = false;
+        isRecording = false;
     }
 
     @Override
@@ -2133,15 +2173,16 @@ public class CreateNoteActivity extends AppCompatActivity {
         if (isRecording) {
             stopRecording();
         }
-        if(isPlaying) {
+        if (isPlaying) {
             stopAudio();
         }
     }
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void getPermissionToRecordAudio() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
                 || ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
-                || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ) {
+                || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 
             requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     RECORD_AUDIO_REQUEST_CODE);
@@ -2156,7 +2197,7 @@ public class CreateNoteActivity extends AppCompatActivity {
             if (grantResults.length == 3 &&
                     grantResults[0] == PackageManager.PERMISSION_GRANTED
                     && grantResults[1] == PackageManager.PERMISSION_GRANTED
-                    && grantResults[2] == PackageManager.PERMISSION_GRANTED){
+                    && grantResults[2] == PackageManager.PERMISSION_GRANTED) {
             } else {
                 Toast.makeText(this, "You must give permissions to use this app. App is exiting.", Toast.LENGTH_SHORT).show();
                 finishAffinity();

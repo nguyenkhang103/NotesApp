@@ -27,6 +27,8 @@ public class Note implements Serializable {
     private String color;
     @ColumnInfo(name = "web_link")
     private String url;
+    @ColumnInfo(name = "voice_record")
+    private String voiceRecorder;
     @TypeConverters(DateConverter.class)
     Date timeReminder;
     // title
@@ -45,6 +47,9 @@ public class Note implements Serializable {
     private boolean isContentBold;
     private boolean isContentItalic;
     private boolean isContentUnderLined;
+
+    public Note() {
+    }
 
     public int getTitleColor() {
         return titleColor;
@@ -228,6 +233,14 @@ public class Note implements Serializable {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getVoiceRecorder() {
+        return voiceRecorder;
+    }
+
+    public void setVoiceRecorder(String voiceRecorder) {
+        this.voiceRecorder = voiceRecorder;
     }
 
     @NonNull

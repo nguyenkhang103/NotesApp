@@ -2,6 +2,7 @@ package com.example.kaido.noteapp.activities;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -21,9 +22,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.ColorDrawable;
 import android.media.MediaCodec;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -32,8 +36,10 @@ import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Chronometer;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -46,6 +52,8 @@ import com.example.kaido.noteapp.database.NoteDB;
 import com.example.kaido.noteapp.entities.Note;
 import com.example.kaido.noteapp.listeners.NoteListener;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -67,13 +75,23 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
 
     private int noteSelectedPosition = -1;
 
-    private AlertDialog alertDialogQuickActionLink, alertDialogQuickActionTimeReminder;
+    private AlertDialog alertDialogQuickActionLink, alertDialogQuickActionTimeReminder, alertDialogQuickActionVoiceRecoder;
+    private Chronometer timer;
+    private String textFileName = "";
+    private boolean isRecording = false;
+    private boolean isPausing = false;
+    private MediaRecorder mediaRecorder;
+    private String finalPath = "";
+    private File fileToPlay = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getPermissionToRecordAudio();
+        }
         ImageView imgAddNote = findViewById(R.id.imageAddNoteMain);
         imgAddNote.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -106,6 +124,14 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
                             REQUEST_CODE_ADD_NOTE
                     );
                 }
+            }
+        });
+
+        findViewById(R.id.imageVoiceRecorder).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showVoiceRecorderDialog();
+
             }
         });
 
@@ -160,6 +186,72 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
                 }
             }
         });
+    }
+
+    private void showVoiceRecorderDialog() {
+        if (alertDialogQuickActionVoiceRecoder == null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            View view = LayoutInflater.from(this).inflate(R.layout.layout_add_voice_recorder, (ViewGroup) findViewById(R.id.layoutAddVoiceRecorderDialog));
+            builder.setView(view);
+            alertDialogQuickActionVoiceRecoder = builder.create();
+
+            if (alertDialogQuickActionVoiceRecoder.getWindow() != null) {
+                alertDialogQuickActionVoiceRecoder.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+            }
+            final ImageButton imageRecordButton = view.findViewById(R.id.imageRecordVoice);
+            final EditText fileName = view.findViewById(R.id.inputFileName);
+            timer = view.findViewById(R.id.cmRecorder);
+            if (fileName.getText().toString().trim().isEmpty()) {
+                textFileName = "Record 01";
+            } else {
+                textFileName = fileName.getText().toString();
+            }
+            imageRecordButton.setOnClickListener(new View.OnClickListener() {
+                @RequiresApi(api = Build.VERSION_CODES.N)
+                @SuppressLint("UseCompatLoadingForDrawables")
+                @Override
+                public void onClick(View view) {
+                    if (isRecording) {
+                        // stop recording
+                        if (!isPausing) {
+                            pauseRecording();
+                            Log.d("PAUSE", isPausing + "");
+                        }
+                        imageRecordButton.setBackground(getResources().getDrawable(R.drawable.background_stop_recording));
+                        isRecording = false;
+                    } else {
+                        // start recording
+                        if (isPausing) {
+                            resumeRecording();
+                            Log.d("RESUME", isPausing + "");
+                        } else {
+                            startRecording(textFileName);
+                        }
+                        imageRecordButton.setBackground(getResources().getDrawable(R.drawable.background_start_recording));
+                    }
+                }
+            });
+            view.findViewById(R.id.textAddVoiceRecorder).setOnClickListener(new View.OnClickListener() {
+                @SuppressLint({"SimpleDateFormat", "SetTextI18n"})
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(getApplicationContext(), CreateNoteActivity.class);
+                    intent.putExtra("isQuickActionNote", true);
+                    intent.putExtra("quickActionType", "voice_record");
+                    intent.putExtra("path", finalPath);
+                    startActivityForResult(intent, REQUEST_CODE_ADD_NOTE);
+                    alertDialogQuickActionVoiceRecoder.dismiss();
+                }
+            });
+            view.findViewById(R.id.textCancel).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    stopRecording();
+                    alertDialogQuickActionVoiceRecoder.dismiss();
+                }
+            });
+        }
+        alertDialogQuickActionVoiceRecoder.show();
     }
 
     private void showLinkWebDialog() {
@@ -281,6 +373,71 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
         }
         return imagePath;
     }
+    private void initFilePath(String fileName) {
+        File root = android.os.Environment.getExternalStorageDirectory();
+        File file = new File(root.getAbsolutePath() + "/NoteApp/Audios");
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        finalPath = root.getAbsolutePath() + "/NoteApp/Audios/" + fileName + "_" + (System.currentTimeMillis() + ".mp3");
+        fileToPlay = new File(finalPath);
+
+    }
+    private void startRecording(String fileName) {
+        timer.setBase(SystemClock.elapsedRealtime());
+        timer.start();
+        isRecording = true;
+        mediaRecorder = new MediaRecorder();
+        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        initFilePath(fileName);
+        mediaRecorder.setOutputFile(finalPath);
+        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        try {
+            mediaRecorder.prepare();
+            mediaRecorder.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void pauseRecording() {
+        timer.stop();
+        mediaRecorder.pause();
+        isPausing = true;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void resumeRecording() {
+        timer.start();
+        mediaRecorder.resume();
+        isPausing = false;
+        isRecording = true;
+    }
+
+
+    private void stopRecording() {
+        timer.setBase(SystemClock.elapsedRealtime());
+        timer.stop();
+        try {
+            mediaRecorder.stop();
+        } catch (RuntimeException ex) {
+            ex.printStackTrace();
+        }
+        mediaRecorder.release();
+        mediaRecorder = null;
+        isPausing = false;
+        isRecording = false;
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (isRecording) {
+            stopRecording();
+        }
+    }
 
     private void getNotes(final int requestCode, final boolean isNoteDeleted) {
         @SuppressLint("StaticFieldLeak")
@@ -353,6 +510,17 @@ public class MainActivity extends AppCompatActivity implements NoteListener {
         startActivityForResult(intent, REQUEST_CODE_UPDATE_NOTE);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void getPermissionToRecordAudio() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
+                || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_CODE);
+
+        }
+    }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);

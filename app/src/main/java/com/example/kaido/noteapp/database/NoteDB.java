@@ -13,7 +13,7 @@ import androidx.sqlite.db.SupportSQLiteOpenHelper;
 import com.example.kaido.noteapp.dao.NoteDAO;
 import com.example.kaido.noteapp.entities.Note;
 
-@Database(entities = Note.class, version = 9, exportSchema = false)
+@Database(entities = Note.class, version = 1, exportSchema = false)
 public abstract class NoteDB extends RoomDatabase {
     public static NoteDB noteDB;
 

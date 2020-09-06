@@ -78,7 +78,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
 
     public static class NoteHolder extends RecyclerView.ViewHolder {
 
-        TextView txtNoteTitle, txtNoteSubTitle, txtDateTime, txtLinkURL;
+        TextView txtNoteTitle, txtNoteSubTitle, txtDateTime, txtLinkURL, txtRecorder;
         LinearLayout layoutNote;
         RoundedImageView imageNote;
 
@@ -90,6 +90,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
             layoutNote = itemView.findViewById(R.id.layout_item_note);
             imageNote = itemView.findViewById(R.id.imageImageNote);
             txtLinkURL = itemView.findViewById(R.id.textLinkURL);
+            txtRecorder = itemView.findViewById(R.id.textRecorder);
         }
 
         public void setNote(Note note) {
@@ -201,6 +202,13 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteHolder> {
                 txtLinkURL.setVisibility(View.GONE);
             } else {
                 txtLinkURL.setText(note.getUrl());
+            }
+
+            if(note.getVoiceRecorder() == null || note.getVoiceRecorder().trim().isEmpty()) {
+                txtRecorder.setVisibility(View.GONE);
+            } else {
+                String tmp = note.getVoiceRecorder().substring(35);
+                txtRecorder.setText(tmp);
             }
         }
 

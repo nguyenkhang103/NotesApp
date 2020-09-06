@@ -87,15 +87,7 @@
         <ImageView
             android:layout_width="@dimen/_24sdp"
             android:layout_height="@dimen/_24sdp"
-            android:src="@drawable/ic_alarm"
-            android:id="@+id/imageTimeReminder"
-            app:tint="@color/colorIcons"
-            android:contentDescription="@string/app_name" />
-        <ImageView
-            android:layout_width="@dimen/_24sdp"
-            android:layout_height="@dimen/_24sdp"
             android:src="@drawable/ic_image"
-            android:layout_marginStart="@dimen/_15sdp"
             android:id="@+id/imageImageNote"
             app:tint="@color/colorIcons"
             android:contentDescription="@string/app_name"/>
@@ -107,6 +99,22 @@
             android:id="@+id/imageWebLinkNote"
             app:tint="@color/colorIcons"
             android:contentDescription="@string/app_name"/>
+        <ImageView
+            android:layout_width="@dimen/_24sdp"
+            android:layout_height="@dimen/_24sdp"
+            android:layout_marginStart="@dimen/_15sdp"
+            android:src="@drawable/ic_alarm"
+            android:id="@+id/imageTimeReminder"
+            app:tint="@color/colorIcons"
+            android:contentDescription="@string/app_name" />
+        <ImageView
+            android:layout_width="@dimen/_24sdp"
+            android:layout_height="@dimen/_24sdp"
+            android:layout_marginStart="@dimen/_15sdp"
+            android:src="@drawable/ic_mic"
+            android:id="@+id/imageVoiceRecorder"
+            app:tint="@color/colorIcons"
+            android:contentDescription="@string/app_name" />
     </LinearLayout>
 
     <ImageView
